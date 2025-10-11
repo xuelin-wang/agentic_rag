@@ -1,0 +1,26 @@
+[project]
+name = "agentic_rag_api"
+version = "0.1.0"
+description = "Agentic RAG REST API (FastAPI + SSE)"
+requires-python = ">=3.12"
+readme = "README.md"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+
+
+# Keep deps minimal; add your RAG stack later
+dependencies = [
+    "fastapi>=0.119.0", # latest FastAPI
+    "uvicorn[standard]>=0.30.0", # ASGI server
+    "sse-starlette>=3.0.0", # solid SSE implementation
+    "pydantic-settings>=2.4.0", # env-based configuration
+    "httpx>=0.27.2", # outbound HTTP (e.g., models, tools)
+    "orjson>=3.10.0" # fast JSON responses
+]
+
+
+[tool.uv]
+# nothing required; `uv` will generate/maintain the lock
+
+
+[project.scripts]
+serve = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
