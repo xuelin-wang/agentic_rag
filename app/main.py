@@ -1,9 +1,9 @@
 from __future__ import annotations
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from sse_starlette import EventSourceResponse, JSONServerSentEvent
-from .schemas import QueryRequest, QueryResponse, StreamChunk, StreamFinal, StreamError
+from .schemas import QueryRequest, QueryResponse, StreamError
 from .core.config import settings
 from .services.rag import stream_answer, full_answer
 
@@ -48,17 +48,29 @@ async def query_stream(request: Request, query: str, session_id: str | None = No
             async for event in stream_answer(req):
                 if await request.is_disconnected():
                     break
-                i += 1
-                # Use JSONServerSentEvent for correct SSE framing of JSON
-                if isinstance(event, StreamChunk):
-                    yield JSONServerSentEvent({"type": event.type, "delta": event.delta, "index": i}).model_dump()
-                elif isinstance(event, StreamFinal):
-                    yield JSONServerSentEvent(event.model_dump()).model_dump()
+                payload = event.model_dump()
+                event_type = payload.get("type")
+
+                if event_type == "chunk":
+                    i += 1
+                    payload["index"] = i
+                    yield JSONServerSentEvent(payload)
+                elif event_type == "final":
+                    yield JSONServerSentEvent(payload)
                 else:
-                    # Shouldn't happen in this stub; left for completeness
-                    yield JSONServerSentEvent({"type": "error", "message": "unknown event"}).model_dump()
+                    yield JSONServerSentEvent(
+                        {
+                            "type": "error",
+                            "message": (
+                                "unknown event type: "
+                                f"{event_type or type(event).__name__}"
+                            ),
+                        }
+                    )
         except Exception as exc:  # pylint: disable=broad-except
-            yield JSONServerSentEvent(StreamError(type="error", message=str(exc)).model_dump()).model_dump()
+            yield JSONServerSentEvent(
+                StreamError(type="error", message=str(exc)).model_dump()
+            )
 
     return EventSourceResponse(
         event_gen(),

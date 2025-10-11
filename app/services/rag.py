@@ -14,10 +14,10 @@ async def stream_answer(req: schemas.QueryRequest) -> AsyncIterator[schemas.Stre
     tokens = await _fake_tokenize(f"Agentic RAG reply to: {req.query}")
     answer_accum: list[str] = []
 
-    for i, tok in enumerate(tokens):
+    for _, tok in enumerate(tokens):
         await asyncio.sleep(0.08)  # simulate work/latency
-    answer_accum.append(tok)
-    yield schemas.StreamChunk(delta=tok)
+        answer_accum.append(tok)
+        yield schemas.StreamChunk(delta=tok)
 
     final = schemas.StreamFinal(answer="".join(answer_accum).strip(), citations=["demo://stub"])
     yield final
