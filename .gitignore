@@ -1,0 +1,108 @@
+# --- Python bytecode / cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+.conda/
+.python-version  # pyenv/ASDF version file (ignore if you commit it intentionally)
+
+# --- Dependency/build artifacts ---
+build/
+dist/
+develop-eggs/
+downloads/
+.eggs/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+*.whl
+
+# --- Packaging / PyInstaller ---
+*.manifest
+*.spec
+
+# --- C extensions / compiled outputs ---
+*.so
+*.pyd
+*.dll
+
+# --- Test & coverage ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.cache/
+.tox/
+.nox/
+.hypothesis/
+.pyre/
+.pytype/
+
+# --- Linters / tooling caches ---
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pyright/
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+.profile_default/
+.ipython/
+
+# --- Docs (Sphinx, MkDocs, etc.) ---
+docs/_build/
+site/
+
+# --- Logs / runtime ---
+*.log
+logs/
+celerybeat-schedule
+celerybeat.pid
+
+# --- Framework-specific (optional common cases) ---
+# Django
+*.sqlite3
+db.sqlite3
+staticfiles/
+media/
+
+# Flask
+instance/
+.webassets-cache
+
+# FastAPI/Uvicorn/Gunicorn
+*.pid
+
+# --- Environment & secrets (keep these out of git) ---
+.env
+.env.*
+*.env
+*.secret
+secrets.*
+*.key
+*.pem
+
+# --- Editors / IDEs ---
+.vscode/
+.idea/
+*.iml
+.history/
+*.swp
+*.swo
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- Q&A: lock files ---
+# Keep lock files committed for reproducible builds:
+#   poetry.lock
+#   uv.lock
+# (So we DO NOT ignore them.)
+
