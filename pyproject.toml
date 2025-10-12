@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "agentic_rag"
 version = "0.1.0"
@@ -30,6 +34,7 @@ dev = [
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
+pythonpath = ["src"]
 
 # ---- Ruff (formatter + linter) ----
 [tool.ruff]
@@ -51,7 +56,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["agentic_rag"]
+known-first-party = ["agent_rag"]
 
 [tool.ruff.format]
 # Match Black's style closely
@@ -62,4 +67,10 @@ docstring-code-format = false
 
 
 [project.scripts]
-serve = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+serve = "agent_rag.main:serve"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

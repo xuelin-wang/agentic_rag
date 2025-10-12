@@ -86,3 +86,15 @@ async def query_stream(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+def serve() -> None:
+    """Expose an app runner compatible with setuptools entry points."""
+    import uvicorn
+
+    uvicorn.run(
+        "agent_rag.main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.reload,
+    )

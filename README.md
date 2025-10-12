@@ -1,6 +1,6 @@
 # Run
 ```shell
-uv run --active  -- uvicorn app.main:app --reload --port 8000
+uv run --active  -- uvicorn agent_rag.main:app --reload --port 8000
 ```
 
 Test:
@@ -13,4 +13,3 @@ curl -sS -X POST http://localhost:8000/v1/query \
 # Streaming (SSE) – note GET + query params
 curl -N "http://localhost:8000/v1/query/stream?query=hello%20world"
 ```
-
