@@ -10,8 +10,7 @@ from typing import Iterable, Protocol
 class SupportsPersist(Protocol):
     """Protocol for objects that can be persisted to disk."""
 
-    def persist(self, output_dir: str) -> None:
-        ...
+    def persist(self, output_dir: str) -> None: ...
 
 
 @dataclass(slots=True)

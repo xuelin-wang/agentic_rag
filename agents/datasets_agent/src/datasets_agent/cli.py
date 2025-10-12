@@ -18,8 +18,12 @@ _DEFAULT_CATEGORIES = {
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Query dataset categories for relevant leads.")
-    parser.add_argument("prompt", help="Question or topic to search against the dataset catalog")
+    parser = argparse.ArgumentParser(
+        description="Query dataset categories for relevant leads."
+    )
+    parser.add_argument(
+        "prompt", help="Question or topic to search against the dataset catalog"
+    )
     return parser
 
 

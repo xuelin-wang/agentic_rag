@@ -12,8 +12,7 @@ from agent_core.context import AgentContext, AgentResponse
 class SupportsLoadDocuments(Protocol):
     """Protocol for loaders that provide LlamaIndex documents."""
 
-    def load_data(self) -> Iterable[Any]:
-        ...
+    def load_data(self) -> Iterable[Any]: ...
 
 
 @dataclass(slots=True)
@@ -31,7 +30,9 @@ def build_default_index(data_path: Path):
     try:
         from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
     except ImportError as exc:
-        raise RuntimeError("llama-index is required to build the default index") from exc
+        raise RuntimeError(
+            "llama-index is required to build the default index"
+        ) from exc
 
     reader: SupportsLoadDocuments = SimpleDirectoryReader(input_dir=str(data_path))
     documents = list(reader.load_data())
@@ -62,9 +63,13 @@ class RAGAgent:
             self._index = self._index_factory(self._config.data_path)
         return self._index
 
-    def query(self, prompt: str, *, context: AgentContext | None = None) -> AgentResponse:
+    def query(
+        self, prompt: str, *, context: AgentContext | None = None
+    ) -> AgentResponse:
         index = self._ensure_index()
-        query_kwargs: MutableMapping[str, Any] = {"response_mode": self._config.response_mode}
+        query_kwargs: MutableMapping[str, Any] = {
+            "response_mode": self._config.response_mode
+        }
         if self._config.query_kwargs:
             query_kwargs.update(self._config.query_kwargs)
 

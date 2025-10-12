@@ -22,7 +22,9 @@ def apply_llama_settings(settings: LlamaSettings) -> None:
     try:
         from llama_index.core import Settings
     except ImportError as exc:
-        raise RuntimeError("llama-index must be installed to configure global settings") from exc
+        raise RuntimeError(
+            "llama-index must be installed to configure global settings"
+        ) from exc
 
     for key, value in asdict(settings).items():
         if value is not None:

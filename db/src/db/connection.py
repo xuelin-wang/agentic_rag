@@ -9,8 +9,7 @@ from typing import Any, Protocol
 class SupportsConnect(Protocol):
     """Protocol for connection factories."""
 
-    def connect(self) -> Any:
-        ...
+    def connect(self) -> Any: ...
 
 
 @dataclass(slots=True)
@@ -24,7 +23,9 @@ class ConnectionConfig:
 class ConnectionManager:
     """Placeholder connection manager implementation."""
 
-    def __init__(self, config: ConnectionConfig, factory: SupportsConnect | None = None) -> None:
+    def __init__(
+        self, config: ConnectionConfig, factory: SupportsConnect | None = None
+    ) -> None:
         self._config = config
         self._factory = factory
 

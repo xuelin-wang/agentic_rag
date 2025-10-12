@@ -23,7 +23,9 @@ def _default_query_engine(config: AnalyticsAgentConfig) -> Any:
     try:
         from llama_index.experimental.query_engine import PandasQueryEngine
     except ImportError as exc:
-        raise RuntimeError("llama-index experimental extras are required for analytics mode") from exc
+        raise RuntimeError(
+            "llama-index experimental extras are required for analytics mode"
+        ) from exc
 
     return PandasQueryEngine(df=config.dataframe, verbose=False)
 

@@ -22,7 +22,9 @@ class DatasetsAgent:
     def __init__(self, config: DatasetsAgentConfig) -> None:
         self._config = config
 
-    def query(self, prompt: str, *, context: AgentContext | None = None) -> AgentResponse:
+    def query(
+        self, prompt: str, *, context: AgentContext | None = None
+    ) -> AgentResponse:
         lower_prompt = prompt.lower()
         matches: list[str] = []
 

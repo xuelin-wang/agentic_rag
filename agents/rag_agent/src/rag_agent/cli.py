@@ -12,7 +12,9 @@ from rag_agent.agent import RAGAgent, RAGAgentConfig
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Interact with the RAG agent over a dataset.")
+    parser = argparse.ArgumentParser(
+        description="Interact with the RAG agent over a dataset."
+    )
     parser.add_argument("prompt", help="Question to send to the agent")
     parser.add_argument(
         "--data-path",
