@@ -35,12 +35,20 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+extend-exclude = ["dist", "build", ".venv"]
 
 [tool.ruff.lint]
-# Core rules: pycodestyle/pyflakes/imports + bugbear + pyupgrade
-select = ["E", "F", "I", "B", "UP"]
-# Example ignores (add as needed)
-# ignore = ["E203", "E501"]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "I",   # isort (import sort)
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "PGH", # pygrep-hooks (useful warnings)
+]
+ignore = [
+    "E203",  # space before : (Black/Ruff formatting compatibility)
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["agentic_rag"]
