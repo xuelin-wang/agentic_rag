@@ -1,9 +1,18 @@
 # Run
 ```shell
-uv run --active  -- uvicorn agent_rag.main:app --reload --port 8000
+uv run --active  -- uvicorn app_api.main:app --reload --port 8000
 ```
 
 Test:
+
+
+pytest:
+```shell 
+uv sync --active --extra dev 
+uv run --active pytest
+```
+
+Manual:
 ```shell
 # Single response
 curl -sS -X POST http://localhost:8000/v1/query \

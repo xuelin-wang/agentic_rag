@@ -93,7 +93,7 @@ def serve() -> None:
     import uvicorn
 
     uvicorn.run(
-        "agent_rag.main:app",
+        "app_api.main:app",
         host=settings.host,
         port=settings.port,
         reload=settings.reload,
