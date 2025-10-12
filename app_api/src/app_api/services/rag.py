@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 
-from . import schemas
+import app_api.schemas as schemas
 
 
 # --- Replace these with your real pipeline pieces later ---

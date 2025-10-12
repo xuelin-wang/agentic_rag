@@ -1,5 +1,5 @@
 """Analytics agent package."""
 
-from .agent import AnalyticsAgent
+from analytics_agent.agent import AnalyticsAgent
 
 __all__ = ["AnalyticsAgent"]

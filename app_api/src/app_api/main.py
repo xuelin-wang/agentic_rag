@@ -5,9 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from sse_starlette import EventSourceResponse, JSONServerSentEvent
 
-from .core.config import settings
-from .schemas import QueryRequest, QueryResponse, StreamError
-from .services.rag import full_answer, stream_answer
+from app_api.core.config import settings
+from app_api.schemas import QueryRequest, QueryResponse, StreamError
+from app_api.services.rag import full_answer, stream_answer
 
 app = FastAPI(
     title="Agentic RAG API",

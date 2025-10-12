@@ -8,7 +8,7 @@ from typing import Sequence
 
 from agent_core.context import AgentContext
 
-from .agent import RAGAgent, RAGAgentConfig
+from rag_agent.agent import RAGAgent, RAGAgentConfig
 
 
 def build_parser() -> argparse.ArgumentParser:

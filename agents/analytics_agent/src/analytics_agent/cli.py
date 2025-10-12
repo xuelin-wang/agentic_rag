@@ -10,7 +10,7 @@ import pandas as pd
 
 from agent_core.context import AgentContext
 
-from .agent import AnalyticsAgent, AnalyticsAgentConfig
+from analytics_agent.agent import AnalyticsAgent, AnalyticsAgentConfig
 
 
 def build_parser() -> argparse.ArgumentParser:

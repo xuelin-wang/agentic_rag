@@ -1,8 +1,8 @@
 """Shared utilities for agent projects."""
 
-from .context import AgentContext, AgentResponse
-from .registry import AgentRegistry
-from .settings import LlamaSettings, apply_llama_settings
+from core.context import AgentContext, AgentResponse
+from core.registry import AgentRegistry
+from core.settings import LlamaSettings, apply_llama_settings
 
 __all__ = [
     "AgentContext",
