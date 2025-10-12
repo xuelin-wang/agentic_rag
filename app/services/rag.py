@@ -10,7 +10,9 @@ async def _fake_tokenize(text: str) -> list[str]:
     return [t + " " for t in text.split()]
 
 
-async def stream_answer(req: schemas.QueryRequest) -> AsyncIterator[schemas.StreamChunk | schemas.StreamFinal]:
+async def stream_answer(
+    req: schemas.QueryRequest,
+) -> AsyncIterator[schemas.StreamChunk | schemas.StreamFinal]:
     tokens = await _fake_tokenize(f"Agentic RAG reply to: {req.query}")
     answer_accum: list[str] = []
 

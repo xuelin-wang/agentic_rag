@@ -1,5 +1,5 @@
 [project]
-name = "agentic_rag_api"
+name = "agentic_rag"
 version = "0.1.0"
 description = "Agentic RAG REST API (FastAPI + SSE)"
 requires-python = ">=3.12"
@@ -17,20 +17,41 @@ dependencies = [
     "orjson>=3.10.0" # fast JSON responses
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.6.9",
+]
+
 
 [tool.uv]
 # nothing required; `uv` will generate/maintain the lock
 
-[tool.black]
-line-length = 100
-target-version = ["py311"]
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
 
+# ---- Ruff (formatter + linter) ----
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]  # pycodestyle/pyflakes/import order
+# Core rules: pycodestyle/pyflakes/imports + bugbear + pyupgrade
+select = ["E", "F", "I", "B", "UP"]
+# Example ignores (add as needed)
+# ignore = ["E203", "E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["agentic_rag"]
+
+[tool.ruff.format]
+# Match Black's style closely
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = false
+
 
 [project.scripts]
 serve = "uvicorn app.main:app --host 0.0.0.0 --port 8000"

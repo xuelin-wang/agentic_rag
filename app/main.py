@@ -38,8 +38,13 @@ async def query(req: QueryRequest) -> QueryResponse:
 # NOTE: EventSource in browsers only supports GET; pass small inputs via query params.
 # For larger payloads, create a ticket first (POST) then stream by ticket id.
 @app.get(f"{settings.api_prefix}/query/stream")
-async def query_stream(request: Request, query: str, session_id: str | None = None, top_k: int = 5,
-                       temperature: float = 0.0):
+async def query_stream(
+    request: Request,
+    query: str,
+    session_id: str | None = None,
+    top_k: int = 5,
+    temperature: float = 0.0,
+):
     req = QueryRequest(query=query, session_id=session_id, top_k=top_k, temperature=temperature)
 
     async def event_gen():
@@ -62,15 +67,12 @@ async def query_stream(request: Request, query: str, session_id: str | None = No
                         {
                             "type": "error",
                             "message": (
-                                "unknown event type: "
-                                f"{event_type or type(event).__name__}"
+                                f"unknown event type: {event_type or type(event).__name__}"
                             ),
                         }
                     )
         except Exception as exc:  # pylint: disable=broad-except
-            yield JSONServerSentEvent(
-                StreamError(type="error", message=str(exc)).model_dump()
-            )
+            yield JSONServerSentEvent(StreamError(type="error", message=str(exc)).model_dump())
 
     return EventSourceResponse(
         event_gen(),
