@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Repository Conventions
-- Python 3.12; package manager: `uv`.
+- Python 3.12, uses .venv/bin/python; package manager: `uv`.
 - Lint & format with Ruff.
 - Always run before committing:
   1. `uvx ruff check --fix .`

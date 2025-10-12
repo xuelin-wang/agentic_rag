@@ -1,10 +1,10 @@
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List
 
 
 class Settings(BaseSettings):
     api_prefix: str = "/v1"
-    cors_origins: List[str] = ["*"]
+    cors_origins: list[str] = ["*"]
     sse_ping_seconds: int = 15
     sse_send_timeout_seconds: int | None = 30
 

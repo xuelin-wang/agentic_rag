@@ -1,11 +1,13 @@
 from __future__ import annotations
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from sse_starlette import EventSourceResponse, JSONServerSentEvent
-from .schemas import QueryRequest, QueryResponse, StreamError
+
 from .core.config import settings
-from .services.rag import stream_answer, full_answer
+from .schemas import QueryRequest, QueryResponse, StreamError
+from .services.rag import full_answer, stream_answer
 
 app = FastAPI(
     title="Agentic RAG API",
