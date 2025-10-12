@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "core"
+name = "knowledge-base"
 version = "0.1.0"
-description = "Shared utilities"
+description = "Skeleton utilities for preparing knowledge base artifacts"
 requires-python = ">=3.12"
 readme = "README.md"
 authors = [{ name = "Your Name", email = "you@example.com" }]
