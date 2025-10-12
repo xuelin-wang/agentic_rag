@@ -2,6 +2,12 @@
 
 Polyrepo that hosts several focused subprojects working together to deliver an agentic retrieval-augmented system.
 
+## Todo
+- a simple rag agent using llamaindex library. Must be able to load a pdf file, have summaries for each chunk, 
+and when search, must combine BM25 that searches the summaries and vector search to get best matches of relevant
+chunks for a query
+- A datasets agent that search categories of existing datasets to find relevant datasets for a query.
+- A simple data analytics agent that takes a dataset and drive stats / plots for a query.
 ## Layout
 - `app_api/` – FastAPI service that exposes the orchestration layer
 - `core/` – Shared utilities (`agent_core`) reused by downstream agents
