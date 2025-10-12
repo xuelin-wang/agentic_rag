@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rag-agent"
+version = "0.1.0"
+description = "Retrieval-augmented generation agent built on LlamaIndex"
+requires-python = ">=3.12"
+readme = "README.md"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+dependencies = [
+    "llama-index>=0.10.48,<0.11",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6.9",
+]
+
+[project.scripts]
+rag-agent-demo = "rag_agent.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
