@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-import logging
 import os
 from pathlib import Path
 from typing import Final
 from uuid import uuid4
 
+import structlog
 from fastapi import UploadFile
 from pypdf import PdfReader
 
 from documents.schemas import DocumentPayload
 from documents.services.indexing_service import DocumentIndexService
 
-LOGGER: Final = logging.getLogger(__name__)
+LOGGER: Final = structlog.get_logger(__name__)
 
 
 def _default_upload_root() -> Path:
@@ -95,5 +95,6 @@ def process_pdf_for_indexing(
 
     try:
         service.index_documents([payload])
+        LOGGER.info("Indexed PDF document %s from %s", document_id, file_path)
     except Exception as exc:  # pragma: no cover - defensive logging
         LOGGER.exception("Failed to index document %s: %s", document_id, exc)

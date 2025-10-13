@@ -88,6 +88,9 @@ secrets.*
 *.key
 *.pem
 
+# server generated files
+documents/data/uploads/
+
 # --- Editors / IDEs ---
 .vscode/
 .idea/
