@@ -18,8 +18,8 @@ Reference the helpers when orchestrating agent workflows:
 
 ```python
 from core.context import Context
-from core.settings import apply_llama_settings, LlamaSettings
+from core.settings import apply_settings, LlamaSettings
 
-apply_llama_settings(LlamaSettings(llm_model="gpt-4o-mini"))
+apply_settings(LlamaSettings(llm_model="gpt-4o-mini"))
 context = Context(namespace="rag-pipeline")
 ```
