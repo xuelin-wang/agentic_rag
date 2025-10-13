@@ -5,29 +5,29 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from core.context import AgentContext
+from core.context import Context
 
 
-class AgentRegistry:
+class Registry:
     """Registry that maps agent identifiers to callables."""
 
     def __init__(self) -> None:
-        self._factories: dict[str, Callable[[AgentContext], Any]] = {}
+        self._factories: dict[str, Callable[[Context], Any]] = {}
 
-    def register(self, name: str, factory: Callable[[AgentContext], Any]) -> None:
+    def register(self, name: str, factory: Callable[[Context], Any]) -> None:
         if name in self._factories:
             msg = f"agent '{name}' is already registered"
             raise ValueError(msg)
         self._factories[name] = factory
 
-    def get(self, name: str) -> Callable[[AgentContext], Any]:
+    def get(self, name: str) -> Callable[[Context], Any]:
         try:
             return self._factories[name]
         except KeyError as exc:
             msg = f"agent '{name}' is not registered"
             raise KeyError(msg) from exc
 
-    def build(self, name: str, context: AgentContext) -> Any:
+    def build(self, name: str, context: Context) -> Any:
         factory = self.get(name)
         return factory(context)
 

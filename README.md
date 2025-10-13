@@ -6,6 +6,10 @@ Polyrepo that hosts several focused subprojects working together to deliver an a
 - a simple rag agent using llamaindex library. Must be able to load a pdf file, have summaries for each chunk, 
 and when search, must combine BM25 that searches the summaries and vector search to get best matches of relevant
 chunks for a query
+  - all in app_api subproject, load a pdf, do all processing
+  - when query, search it and get relevant parts
+  - summarize/rephrase to reply
+  - send it back to user
 - A datasets agent that search categories of existing datasets to find relevant datasets for a query.
 - A simple data analytics agent that takes a dataset and drive stats / plots for a query.
 ## Layout

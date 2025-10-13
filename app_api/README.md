@@ -8,6 +8,11 @@ Test:
 
 pytest:
 ```shell 
+source <repo root>/.venv/bin/activate
+
+# ensure in the directory app_api
+cd <repo root>/app_api
+
 uv sync --active --extra dev 
 uv run --active pytest
 ```
