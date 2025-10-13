@@ -1,4 +1,4 @@
-"""Configuration helpers for structlog-based logging."""
+"""Common logging configuration powered by structlog."""
 
 from __future__ import annotations
 
@@ -8,20 +8,16 @@ from typing import Final
 
 import structlog
 
-_CONFIGURED: Final = {"logging": True}
+_IS_CONFIGURED: Final = {"logging": True}
 
 
 def configure_logging() -> None:
-    """Configure structlog and standard logging for JSON output."""
+    """Set up structlog and stdlib logging to emit JSON to stdout."""
 
-    if _CONFIGURED["logging"]:
+    if _IS_CONFIGURED["logging"]:
         return
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(message)s",
-        stream=sys.stdout,
-    )
+    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
 
     structlog.configure(
         processors=[
@@ -37,4 +33,4 @@ def configure_logging() -> None:
         cache_logger_on_first_use=True,
     )
 
-    _CONFIGURED["logging"] = True
+    _IS_CONFIGURED["logging"] = True

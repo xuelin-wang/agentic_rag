@@ -1,4 +1,4 @@
-"""OpenTelemetry configuration for the documents service."""
+"""Common OpenTelemetry configuration helpers."""
 
 from __future__ import annotations
 
@@ -11,18 +11,18 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 
-_CONFIGURED: Final = {"provider": False}
+_PROVIDER_STATE: Final = {"configured": False}
 
 
-def configure_tracing(app: FastAPI) -> None:
-    """Set up tracing with a console exporter and instrument the FastAPI app."""
+def configure_tracing(app: FastAPI, *, service_name: str = "documents-api") -> None:
+    """Instrument the provided FastAPI application with a console exporter."""
 
-    if not _CONFIGURED["provider"]:
-        resource = Resource.create({"service.name": "documents-api"})
+    if not _PROVIDER_STATE["configured"]:
+        resource = Resource.create({"service.name": service_name})
         tracer_provider = TracerProvider(resource=resource)
         tracer_provider.add_span_processor(SimpleSpanProcessor(ConsoleSpanExporter()))
         trace.set_tracer_provider(tracer_provider)
-        _CONFIGURED["provider"] = True
+        _PROVIDER_STATE["configured"] = True
     else:
         tracer_provider = trace.get_tracer_provider()
 

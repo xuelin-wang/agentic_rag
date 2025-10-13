@@ -10,7 +10,7 @@ source <repo root>/.venv/bin/activate
 # ensure in the directory documents
 cd <repo root>/documents
 
-uv sync
+uv sync --active
 uv run --active  --package documents serve
 
 # test using curl

@@ -1,11 +1,21 @@
 """Application setup for the documents FastAPI service."""
 
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
 from fastapi import FastAPI
 
-from documents.logging_setup import configure_logging
-from documents.routers.indexing import router as indexing_router
-from documents.routers.search import router as search_router
-from documents.telemetry import configure_tracing
+REPO_ROOT = Path(__file__).resolve().parents[3]
+CORE_SRC = REPO_ROOT / "core" / "src"
+if CORE_SRC.exists() and str(CORE_SRC) not in sys.path:
+    sys.path.insert(0, str(CORE_SRC))
+
+from core import configure_logging, configure_tracing  # noqa: E402
+
+from documents.routers.indexing import router as indexing_router  # noqa: E402
+from documents.routers.search import router as search_router  # noqa: E402
 
 
 def create_app() -> FastAPI:
@@ -17,7 +27,7 @@ def create_app() -> FastAPI:
     )
     app.include_router(indexing_router)
     app.include_router(search_router)
-    configure_tracing(app)
+    configure_tracing(app, service_name="documents-api")
     return app
 
 

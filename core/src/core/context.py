@@ -24,3 +24,8 @@ class Response:
 
     content: str
     metadata: Mapping[str, Any] = field(default_factory=dict)
+
+
+# Backwards compatible aliases
+AgentContext = Context
+AgentResponse = Response
