@@ -4,7 +4,7 @@ Shared utilities and abstractions that glue the RAG and analytics agents togethe
 
 ## Modules
 - `core.context`: Common data structures for agent requests and responses
-- `core.settings`: Helpers for applying global `llama-index` configuration
+- `core.settings`: Helpers for applying global configuration
 - `core.registry`: Lightweight registry for wiring agents into applications
 
 ## Usage
@@ -18,8 +18,8 @@ Reference the helpers when orchestrating agent workflows:
 
 ```python
 from core.context import Context
-from core.settings import apply_settings, LlamaSettings
+from core.settings import apply_settings, CoreSettings
 
-apply_settings(LlamaSettings(llm_model="gpt-4o-mini"))
+apply_settings(CoreSettings(llm="gpt-4o-mini"))
 context = Context(namespace="rag-pipeline")
 ```

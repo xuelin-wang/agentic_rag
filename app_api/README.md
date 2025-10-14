@@ -1,6 +1,6 @@
 # Run
 ```shell
-uv run --active  -- uvicorn app_api.main:app --reload --port 8000
+uv run --active  -m app_api.main --config src/app_api/configs/local.yaml
 ```
 
 Test:

@@ -18,7 +18,9 @@ dependencies = [
     "sse-starlette>=3.0.0", # solid SSE implementation
     "pydantic-settings>=2.4.0", # env-based configuration
     "httpx>=0.27.2", # outbound HTTP (e.g., models, tools)
-    "orjson>=3.10.0" # fast JSON responses
+    "orjson>=3.10.0", # fast JSON responses
+    "python-dotenv>=1.0.1",
+    "core",
 ]
 
 [project.optional-dependencies]
@@ -74,3 +76,6 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.uv.sources]
+core = { path = "../core" }

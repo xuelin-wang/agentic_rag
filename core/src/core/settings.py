@@ -11,21 +11,17 @@ from typing import Annotated, Any, TypeVar, get_args, get_origin, get_type_hints
 
 import yaml
 
+@dataclass(slots=True, frozen=True)
+class CoreSettings:
+    """Global settings."""
 
-@dataclass(slots=True)
-class Settings:
-    """Mutable collection of global settings."""
-
-    llm: Any | None = None
-    embed_model: Any | None = None
-    callback_manager: Any | None = None
-    prompt_helper: Any | None = None
+    llm: str = ""
+    embed_model: str = ""
+    openai_api_key: str = ""
 
 
-def apply_settings(settings) -> None:
-    """Apply the provided settings to the global configuration."""
-
-    pass
+# Backwards compatible alias for prior imports
+LlamaSettings = CoreSettings
 
 
 T = TypeVar("T")
@@ -280,4 +276,4 @@ def _to_env_var(path: list[str]) -> str:
     def normalize(segment: str) -> str:
         return segment.replace("-", "_").upper()
 
-    return "_".join(normalize(segment) for segment in path)
+    return "__".join(normalize(segment) for segment in path)

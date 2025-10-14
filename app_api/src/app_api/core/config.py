@@ -1,20 +1,19 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import dataclasses
 
 
-class Settings(BaseSettings):
+@dataclasses.dataclass(frozen=True)
+class CoreConfig:
+    llm: str = ""
+    embed_model: str = ""
+    openai_api_key: str = ""
+
+
+@dataclasses.dataclass(frozen=True)
+class AppSettings:
+    core: CoreConfig
     api_prefix: str = "/v1"
-    cors_origins: list[str] = ["*"]
+    cors_origins: list[str] = dataclasses.field(default_factory=lambda: ["*"])
     sse_ping_seconds: int = 15
-    sse_send_timeout_seconds: int | None = 30
+    sse_send_timeout_seconds: int = 30
     host: str = "0.0.0.0"
     port: int = 8000
-    reload: bool = True
-
-
-model_config = SettingsConfigDict(
-    env_file=".env",
-    env_prefix="RAG_",
-    extra="ignore",
-)
-
-settings = Settings()
