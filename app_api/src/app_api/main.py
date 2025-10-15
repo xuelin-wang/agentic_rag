@@ -1,43 +1,17 @@
 from __future__ import annotations
 
-import argparse
 import asyncio
 from pathlib import Path
-from typing import Sequence
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from sse_starlette import EventSourceResponse, JSONServerSentEvent
 
-import core.settings
 from app_api.core.settings import AppSettings
 from app_api.schemas import QueryRequest, QueryResponse, StreamError
 from app_api.services.rag import full_answer, stream_answer
-
-DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent / "configs" / "local.yaml"
-
-
-def load_app_settings(
-    config_path: str | Path,
-    env_path: str | Path | None = None,
-) -> AppSettings:
-    """Hydrate application settings from YAML and environment variables."""
-
-    if env_path is not None:
-        env_path = Path(env_path).expanduser()
-        if not env_path.is_file():
-            msg = f"Env file '{env_path}' does not exist."
-            raise FileNotFoundError(msg)
-        load_dotenv(dotenv_path=env_path, override=True)
-    else:
-        load_dotenv()
-
-    resolved_config_path = Path(config_path).expanduser()
-    if not resolved_config_path.is_file():
-        raise FileNotFoundError(resolved_config_path)
-    return core.settings.load_dataclass_from_yaml(AppSettings, resolved_config_path)
+from core.cmd_utils import load_app_settings
 
 
 def create_app(settings: AppSettings) -> FastAPI:
@@ -132,8 +106,8 @@ def serve() -> None:
     """Expose an app runner compatible with setuptools entry points."""
     import uvicorn
 
-    args = parse_args()
-    application, settings = build_app(args.config, args.env)
+    settings = load_app_settings(AppSettings, None)
+    application = create_app(settings)
 
     try:
         uvicorn.run(
@@ -154,48 +128,6 @@ def serve() -> None:
         )
         server = uvicorn.Server(config)
         asyncio.run(server.serve())
-
-
-def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    """Parse CLI arguments for configuring the API entry point."""
-
-    parser = argparse.ArgumentParser(description="Run the Agentic RAG API server.")
-    parser.add_argument(
-        "--config",
-        type=str,
-        required=True,
-        help="Path to the YAML configuration file.",
-    )
-    parser.add_argument(
-        "--env",
-        type=str,
-        default=None,
-        help="Path to an env file to load before parsing configuration.",
-    )
-    args = parser.parse_args(argv)
-
-    config_path = Path(args.config).expanduser()
-    if not config_path.is_file():
-        parser.error(f"Configuration file '{config_path}' does not exist.")
-    args.config = config_path
-
-    if args.env is not None:
-        env_path = Path(args.env).expanduser()
-        if not env_path.is_file():
-            parser.error(f"Env file '{env_path}' does not exist.")
-        args.env = env_path
-
-    return args
-
-
-def build_app(
-    config_path: str | Path = DEFAULT_CONFIG_PATH,
-    env_path: str | Path | None = None,
-) -> tuple[FastAPI, AppSettings]:
-    """Convenience helper for constructing the API app."""
-
-    settings = load_app_settings(config_path=config_path, env_path=env_path)
-    return create_app(settings), settings
 
 
 if __name__ == "__main__":

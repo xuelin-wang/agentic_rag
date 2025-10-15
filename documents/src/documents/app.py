@@ -2,15 +2,7 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 from fastapi import FastAPI
-
-REPO_ROOT = Path(__file__).resolve().parents[3]
-CORE_SRC = REPO_ROOT / "core" / "src"
-if CORE_SRC.exists() and str(CORE_SRC) not in sys.path:
-    sys.path.insert(0, str(CORE_SRC))
 
 from core import configure_logging, configure_tracing  # noqa: E402
 
