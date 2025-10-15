@@ -4,9 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 import pathlib
 
-from app_api.core.settings import AppSettings
 from core.cmd_utils import load_app_settings
-from app_api.main import create_app
+from app_api.app import create_app, AppSettings
 
 
 @pytest.fixture()

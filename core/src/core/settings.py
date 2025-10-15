@@ -15,9 +15,15 @@ import yaml
 class CoreSettings:
     """Global settings."""
 
+    # LLM settings
     llm: str = ""
     embed_model: str = ""
     openai_api_key: str = ""
+
+    # common app settings
+    title="",
+    description="",
+    version="",
 
 
 T = TypeVar("T")

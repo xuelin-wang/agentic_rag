@@ -11,7 +11,7 @@ source <repo root>/.venv/bin/activate
 cd <repo root>/documents
 
 uv sync --active
-uv run --active  --package documents serve
+uv run --active  -m documents.app --config src/documents/configs/local.yaml
 
 # test using curl
 curl -X POST http://localhost:8080/documents/index \

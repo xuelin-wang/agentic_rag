@@ -2,20 +2,36 @@
 
 from __future__ import annotations
 
+import dataclasses
+from typing import TypeVar
+
 from fastapi import FastAPI
+import uvicorn
 
-from core import configure_logging, configure_tracing  # noqa: E402
+from core import configure_logging, configure_tracing
+from core.cmd_utils import load_app_settings
+from core.settings import CoreSettings
 
-from documents.routers.indexing import router as indexing_router  # noqa: E402
-from documents.routers.search import router as search_router  # noqa: E402
+from documents.routers.indexing import router as indexing_router
+from documents.routers.search import router as search_router
+
+_SettingsT = TypeVar("_SettingsT")
 
 
-def create_app() -> FastAPI:
+@dataclasses.dataclass(frozen=True)
+class AppSettings(CoreSettings):
+    cors_origins: list[str] = dataclasses.field(default_factory=lambda: ["*"])
+    host: str = "0.0.0.0"
+    port: int = 8080
+
+
+def create_app(settings: AppSettings | None = None) -> FastAPI:
+    resolved_settings = settings or AppSettings()
     configure_logging()
     app = FastAPI(
-        title="Documents API",
-        description="Endpoints for document ingestion and retrieval built on LlamaIndex",
-        version="0.1.0",
+        title=resolved_settings.title,
+        description=resolved_settings.description,
+        version=resolved_settings.version,
     )
     app.include_router(indexing_router)
     app.include_router(search_router)
@@ -23,14 +39,17 @@ def create_app() -> FastAPI:
     return app
 
 
-app = create_app()
-
-
 def serve() -> None:
     """Run the documents service with Uvicorn."""
-    import uvicorn
 
-    uvicorn.run("documents.app:app", host="0.0.0.0", port=8080, reload=False)
+    settings = load_app_settings(AppSettings, None)
+    application = create_app(settings)
+    uvicorn.run(
+        application,
+        host=settings.host,
+        port=settings.port,
+        reload=False,
+    )
 
 
 if __name__ == "__main__":

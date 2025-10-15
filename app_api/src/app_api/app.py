@@ -1,25 +1,35 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from sse_starlette import EventSourceResponse, JSONServerSentEvent
 
-from app_api.core.settings import AppSettings
 from app_api.schemas import QueryRequest, QueryResponse, StreamError
 from app_api.services.rag import full_answer, stream_answer
 from core.cmd_utils import load_app_settings
+import dataclasses
+from core.settings import CoreSettings
+import uvicorn
+
+@dataclasses.dataclass(frozen=True)
+class AppSettings(CoreSettings):
+    api_prefix: str = "/v1"
+    cors_origins: list[str] = dataclasses.field(default_factory=lambda: ["*"])
+    sse_ping_seconds: int = 15
+    sse_send_timeout_seconds: int = 30
+    host: str = "0.0.0.0"
+    port: int = 8000
 
 
 def create_app(settings: AppSettings) -> FastAPI:
     """Instantiate the FastAPI application with the provided settings."""
 
     app = FastAPI(
-        title="Agentic RAG API",
-        version="0.1.0",
+        title=settings.title,
+        version=settings.version,
         default_response_class=ORJSONResponse,
     )
 
@@ -104,7 +114,6 @@ def register_routes(app: FastAPI, settings: AppSettings) -> None:
 
 def serve() -> None:
     """Expose an app runner compatible with setuptools entry points."""
-    import uvicorn
 
     settings = load_app_settings(AppSettings, None)
     application = create_app(settings)

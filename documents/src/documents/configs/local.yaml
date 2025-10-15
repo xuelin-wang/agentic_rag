@@ -3,13 +3,9 @@ llm: "openai/gpt-4o"
 embed_model: "openai/text-embedding-3-large"
 openai_api_key: ""
 # common app settings
-title: "Agentic RAG API"
+title: "Documents API"
 description: ""
 version: "0.1.0"
 
-api_prefix: "/v1"
-cors_origins: ["*"]
-sse_ping_seconds: 15
-sse_send_timeout_seconds: 30
 host: "0.0.0.0"
-port: 8000
+port: 8080

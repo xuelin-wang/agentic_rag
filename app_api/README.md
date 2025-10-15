@@ -1,6 +1,6 @@
 # Run
 ```shell
-uv run --active  -m app_api.main --config src/app_api/configs/local.yaml
+uv run --active  -m app_api.app --config src/app_api/configs/local.yaml
 ```
 
 Test:
