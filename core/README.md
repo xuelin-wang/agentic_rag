@@ -18,8 +18,7 @@ Reference the helpers when orchestrating agent workflows:
 
 ```python
 from core.context import Context
-from core.settings import apply_settings, CoreSettings
+from core.settings import CoreSettings
 
-apply_settings(CoreSettings(llm="gpt-4o-mini"))
 context = Context(namespace="rag-pipeline")
 ```

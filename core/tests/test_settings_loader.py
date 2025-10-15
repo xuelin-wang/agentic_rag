@@ -45,8 +45,8 @@ def test_loads_nested_values_with_env_fallback(tmp_path, monkeypatch):
         """,
     )
 
-    monkeypatch.setenv("DATABASE_CREDENTIALS_USERNAME", "service-user")
-    monkeypatch.setenv("DATABASE_CREDENTIALS_PASSWORD", "secret")
+    monkeypatch.setenv("DATABASE__CREDENTIALS__USERNAME", "service-user")
+    monkeypatch.setenv("DATABASE__CREDENTIALS__PASSWORD", "secret")
     monkeypatch.setenv("DEBUG", "true")
 
     config = load_dataclass_from_yaml(AppConfig, yaml_path)
@@ -72,7 +72,7 @@ def test_missing_required_value_without_env_raises(tmp_path):
     with pytest.raises(ValueError) as exc:
         load_dataclass_from_yaml(AppConfig, yaml_path)
 
-    assert "DATABASE_HOST" in str(exc.value)
+    assert "DATABASE__HOST" in str(exc.value)
 
 
 def test_non_mapping_for_nested_field_errors(tmp_path):

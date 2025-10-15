@@ -78,4 +78,4 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.uv.sources]
-core = { path = "../core" }
+core = { path = "../core", editable = true }

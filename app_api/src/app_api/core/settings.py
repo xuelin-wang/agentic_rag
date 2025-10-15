@@ -1,16 +1,8 @@
 import dataclasses
-
-
-@dataclasses.dataclass(frozen=True)
-class CoreConfig:
-    llm: str = ""
-    embed_model: str = ""
-    openai_api_key: str = ""
-
+from core.settings import CoreSettings
 
 @dataclasses.dataclass(frozen=True)
-class AppSettings:
-    core: CoreConfig
+class AppSettings(CoreSettings):
     api_prefix: str = "/v1"
     cors_origins: list[str] = dataclasses.field(default_factory=lambda: ["*"])
     sse_ping_seconds: int = 15

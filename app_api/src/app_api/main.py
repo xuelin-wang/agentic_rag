@@ -12,7 +12,7 @@ from fastapi.responses import ORJSONResponse
 from sse_starlette import EventSourceResponse, JSONServerSentEvent
 
 import core.settings
-from app_api.core.config import AppSettings
+from app_api.core.settings import AppSettings
 from app_api.schemas import QueryRequest, QueryResponse, StreamError
 from app_api.services.rag import full_answer, stream_answer
 

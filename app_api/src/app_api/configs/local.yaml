@@ -1,7 +1,6 @@
-core:
-  llm: "openai/gpt-4o"
-  embed_model: "openai/text-embedding-3-large"
-  openai_api_key: ""
+llm: "openai/gpt-4o"
+embed_model: "openai/text-embedding-3-large"
+openai_api_key: ""
 api_prefix: "/v1"
 cors_origins: ["*"]
 sse_ping_seconds: 15

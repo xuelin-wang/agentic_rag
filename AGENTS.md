@@ -2,6 +2,12 @@
 
 ## Repository Conventions
 - Python 3.12, uses .venv/bin/python; package manager: `uv`.
+  - Activate virtual env
+    `source .venv/bin/activate`
+  - upate dependencies for a subprojectm using app_api as an example:
+    `cd app_api; uv sync --active --extra dev`
+  - To run test cases
+    `uv run --active pytest`
 - Lint & format with Ruff.
 - Always run before committing:
   1. `uvx ruff check --fix .`

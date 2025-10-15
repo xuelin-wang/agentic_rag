@@ -20,10 +20,6 @@ class CoreSettings:
     openai_api_key: str = ""
 
 
-# Backwards compatible alias for prior imports
-LlamaSettings = CoreSettings
-
-
 T = TypeVar("T")
 
 
