@@ -118,25 +118,14 @@ def serve() -> None:
     settings = load_app_settings(AppSettings, None)
     application = create_app(settings)
 
-    try:
-        uvicorn.run(
-            application,
-            host=settings.host,
-            port=settings.port,
-            reload=False,
-        )
-    except TypeError as exc:
-        if "loop_factory" not in str(exc):
-            raise
-
-        config = uvicorn.Config(
-            app=application,
-            host=settings.host,
-            port=settings.port,
-            reload=False,
-        )
-        server = uvicorn.Server(config)
-        asyncio.run(server.serve())
+    config = uvicorn.Config(
+        app=application,
+        host=settings.host,
+        port=settings.port,
+        reload=False,
+    )
+    server = uvicorn.Server(config=config)
+    asyncio.run(server.serve())
 
 
 if __name__ == "__main__":

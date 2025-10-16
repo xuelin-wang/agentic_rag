@@ -6,6 +6,7 @@ import dataclasses
 from typing import TypeVar
 
 from fastapi import FastAPI
+import asyncio
 import uvicorn
 
 from core import configure_logging, configure_tracing
@@ -44,12 +45,14 @@ def serve() -> None:
 
     settings = load_app_settings(AppSettings, None)
     application = create_app(settings)
-    uvicorn.run(
+    config = uvicorn.Config(
         application,
         host=settings.host,
         port=settings.port,
         reload=False,
     )
+    server = uvicorn.Server(config=config)
+    asyncio.run(server.serve())
 
 
 if __name__ == "__main__":
