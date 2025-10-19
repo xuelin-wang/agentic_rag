@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from dataclasses import MISSING, dataclass, fields, is_dataclass
 import core.settings
 import argparse
+import os
 import structlog
 
 LOGGER: Final = structlog.get_logger(__name__)
@@ -52,6 +53,10 @@ def _load_app_settings(
 
     LOGGER.debug("Loading application settings from YAML",
                  config_path=config_path, env_path=env_path)
+
+    # clean up existing envs
+    os.environ.clear()
+
     if env_path is not None:
         env_path = Path(env_path).expanduser()
         if not env_path.is_file():
