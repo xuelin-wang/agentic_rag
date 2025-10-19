@@ -11,9 +11,14 @@ from typing import Annotated, Any, TypeVar, get_args, get_origin, get_type_hints
 
 import yaml
 
+from core.logging import LoggingSettings
+
+
 @dataclass(slots=True, frozen=True)
 class CoreSettings:
     """Global settings."""
+
+    logging: LoggingSettings=LoggingSettings()
 
     # LLM settings
     llm: str = ""

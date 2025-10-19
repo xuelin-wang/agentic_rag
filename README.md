@@ -6,7 +6,7 @@ Polyrepo that hosts several focused subprojects working together to deliver an a
 - a simple rag agent using llamaindex library. Must be able to load a pdf file, have summaries for each chunk, 
 and when search, must combine BM25 that searches the summaries and vector search to get best matches of relevant
 chunks for a query
-  - file/pdf processing and search api in documents subproject
+  - file/pdf processing and search api in documents subproject: summary search
   - hook up documents search into rag agent.
   - dummy data analysis agent: process a hard coded csv file and return a plot and some stats
   - workflow: from query, determine whether call rag agent and/or data analysis agent

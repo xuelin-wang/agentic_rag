@@ -1,9 +1,12 @@
 from pathlib import Path
-from typing import TypeVar, Sequence
+from typing import Final, TypeVar, Sequence
 from dotenv import load_dotenv
 from dataclasses import MISSING, dataclass, fields, is_dataclass
 import core.settings
 import argparse
+import structlog
+
+LOGGER: Final = structlog.get_logger(__name__)
 
 T = TypeVar("T")
 
@@ -47,6 +50,8 @@ def _load_app_settings(
 ) -> T:
     """Hydrate application settings from YAML and environment variables."""
 
+    LOGGER.debug("Loading application settings from YAML",
+                 config_path=config_path, env_path=env_path)
     if env_path is not None:
         env_path = Path(env_path).expanduser()
         if not env_path.is_file():
@@ -69,6 +74,10 @@ def load_app_settings(
     """Convenience helper for constructing the API app."""
 
     args = _parse_args(argv)
+
+    LOGGER.debug("parsed args",
+                 args = args,
+                 argv = argv)
     if not is_dataclass(dataclass_type):
         msg = f"Expected a dataclass type, got {dataclass_type!r}"
         raise TypeError(msg)

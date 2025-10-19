@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import pydantic.dataclasses as pydantic_dataclasses
 import dataclasses
-from typing import TypeVar
+import structlog
+from typing import Final, TypeVar
 
 from fastapi import FastAPI
 import asyncio
@@ -16,23 +18,23 @@ from core.settings import CoreSettings
 from documents.routers.indexing import router as indexing_router
 from documents.routers.search import router as search_router
 
+LOGGER: Final = structlog.get_logger(__name__)
+
 _SettingsT = TypeVar("_SettingsT")
 
 
-@dataclasses.dataclass(frozen=True)
+@pydantic_dataclasses.dataclass(frozen=True)
 class AppSettings(CoreSettings):
     cors_origins: list[str] = dataclasses.field(default_factory=lambda: ["*"])
     host: str = "0.0.0.0"
     port: int = 8080
 
 
-def create_app(settings: AppSettings | None = None) -> FastAPI:
-    resolved_settings = settings or AppSettings()
-    configure_logging()
+def create_app(settings: AppSettings) -> FastAPI:
     app = FastAPI(
-        title=resolved_settings.title,
-        description=resolved_settings.description,
-        version=resolved_settings.version,
+        title=settings.title,
+        description=settings.description,
+        version=settings.version,
     )
     app.include_router(indexing_router)
     app.include_router(search_router)
@@ -43,7 +45,11 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
 def serve() -> None:
     """Run the documents service with Uvicorn."""
 
-    settings = load_app_settings(AppSettings, None)
+    settings: AppSettings = load_app_settings(AppSettings, None)
+    configure_logging(settings.logging)
+
+    LOGGER.debug("settings", settings=settings)
+
     application = create_app(settings)
     config = uvicorn.Config(
         application,

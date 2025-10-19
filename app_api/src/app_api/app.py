@@ -9,12 +9,14 @@ from sse_starlette import EventSourceResponse, JSONServerSentEvent
 
 from app_api.schemas import QueryRequest, QueryResponse, StreamError
 from app_api.services.rag import full_answer, stream_answer
+from core import configure_logging
 from core.cmd_utils import load_app_settings
+import pydantic.dataclasses as pydantic_dataclasses
 import dataclasses
 from core.settings import CoreSettings
 import uvicorn
 
-@dataclasses.dataclass(frozen=True)
+@pydantic_dataclasses.dataclass(frozen=True)
 class AppSettings(CoreSettings):
     api_prefix: str = "/v1"
     cors_origins: list[str] = dataclasses.field(default_factory=lambda: ["*"])
@@ -115,7 +117,11 @@ def register_routes(app: FastAPI, settings: AppSettings) -> None:
 def serve() -> None:
     """Expose an app runner compatible with setuptools entry points."""
 
-    settings = load_app_settings(AppSettings, None)
+    settings: AppSettings = load_app_settings(AppSettings, None)
+
+    configure_logging(settings.logging)
+
+
     application = create_app(settings)
 
     config = uvicorn.Config(

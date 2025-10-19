@@ -1,3 +1,6 @@
+logging:
+  level_name: "DEBUG"
+
 # LLM settings
 llm: "openai/gpt-4o"
 embed_model: "openai/text-embedding-3-large"

@@ -5,19 +5,25 @@ from __future__ import annotations
 import logging
 import sys
 from typing import Final
+import pydantic.dataclasses as dataclasses
 
 import structlog
 
 _IS_CONFIGURED: Final = {"logging": True}
 
 
-def configure_logging() -> None:
+@dataclasses.dataclass(frozen=True)
+class LoggingSettings:
+    level_name: str = "INFO" # Must be one of CRITICAL, ERROR, WARNING, INFO, DEBUG
+
+def configure_logging(settings: LoggingSettings) -> None:
     """Set up structlog and stdlib logging to emit JSON to stdout."""
 
     if _IS_CONFIGURED["logging"]:
         return
 
-    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
+    level = logging.getLevelNamesMapping().get(settings.level_name, logging.INFO)
+    logging.basicConfig(level=level, format="%(message)s", stream=sys.stdout)
 
     structlog.configure(
         processors=[
