@@ -10,5 +10,18 @@ title: "Documents API"
 description: ""
 version: "0.1.0"
 
+documents:
+  store:
+    type: "LOCAL" # must be one of: LOCAL
+    settings:
+      path: "/tmp/_documents"
+
+  summary_model_name: "openai/gpt-4o-mini"
+  embed:
+    model_name: "BAAI/bge-small-en-v1.5"
+    # may use llamaindex's default instead
+    chunk_size: 384
+
+cors_origins: ["*"]
 host: "0.0.0.0"
 port: 8080

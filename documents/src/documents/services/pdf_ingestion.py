@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-import os
+import pydantic.dataclasses as pydantic_dataclasses
+
 from pathlib import Path
 from typing import Final
 from uuid import uuid4
@@ -13,43 +14,46 @@ from pypdf import PdfReader
 
 from documents.schemas import DocumentPayload
 from documents.services.indexing_service import DocumentIndexService
+from documents.services.settings import DocumentSettings
 
 LOGGER: Final = structlog.get_logger(__name__)
 
+@pydantic_dataclasses.dataclass(frozen=True)
+class DocumentsStore:
+    settings: DocumentSettings
 
-def _default_upload_root() -> Path:
-    return Path(__file__).resolve().parents[3] / "data" / "uploads"
+    def __post_init__(self):
+        destination_dir = self.get_upload_directory()
+        destination_dir.mkdir(parents=True, exist_ok=True)
+
+    def get_upload_directory(self) -> Path:
+        """Return the directory used to store uploaded files."""
+
+        return Path(self.settings.store.settings.path)
 
 
-def get_upload_directory() -> Path:
-    """Return the directory used to store uploaded files."""
+    async def persist_pdf_upload(
+            self,
+            upload: UploadFile,
+            *,
+            document_id: str | None = None,
+    ) -> tuple[str, Path]:
+        """Persist the uploaded PDF to disk and return its document id and path."""
 
-    configured = os.getenv("DOCUMENTS_UPLOAD_DIR")
-    return Path(configured) if configured else _default_upload_root()
+        doc_id = document_id or str(uuid4())
+        destination_dir = self.get_upload_directory()
 
+        original_suffix = Path(upload.filename or "").suffix or ".pdf"
+        target_path = destination_dir / f"{doc_id}{original_suffix}"
 
-async def persist_pdf_upload(
-    upload: UploadFile,
-    *,
-    document_id: str | None = None,
-) -> tuple[str, Path]:
-    """Persist the uploaded PDF to disk and return its document id and path."""
+        content = await upload.read()
+        if not content:
+            raise ValueError("Uploaded PDF is empty.")
 
-    doc_id = document_id or str(uuid4())
-    destination_dir = get_upload_directory()
-    destination_dir.mkdir(parents=True, exist_ok=True)
+        target_path.write_bytes(content)
+        await upload.close()
 
-    original_suffix = Path(upload.filename or "").suffix or ".pdf"
-    target_path = destination_dir / f"{doc_id}{original_suffix}"
-
-    content = await upload.read()
-    if not content:
-        raise ValueError("Uploaded PDF is empty.")
-
-    target_path.write_bytes(content)
-    await upload.close()
-
-    return doc_id, target_path
+        return doc_id, target_path
 
 
 def extract_text_from_pdf(file_path: Path) -> str:

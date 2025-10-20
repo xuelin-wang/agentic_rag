@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+
+from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.extractors import SummaryExtractor
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.llms.openai import OpenAI   # for summaries
+from llama_index.readers.docling import DoclingReader
+from llama_index.node_parser.docling import DoclingNodeParser
+
 from collections.abc import Iterable
 from typing import Any
 

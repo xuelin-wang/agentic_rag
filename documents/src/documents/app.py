@@ -15,8 +15,9 @@ from core import configure_logging, configure_tracing
 from core.cmd_utils import load_app_settings
 from core.settings import CoreSettings
 
-from documents.routers.indexing import router as indexing_router
-from documents.routers.search import router as search_router
+from documents.routers.indexing import create_indexing_router
+from documents.routers.search import create_search_router
+from documents.services.settings import DocumentSettings
 
 LOGGER: Final = structlog.get_logger(__name__)
 
@@ -25,6 +26,7 @@ _SettingsT = TypeVar("_SettingsT")
 
 @pydantic_dataclasses.dataclass(frozen=True)
 class AppSettings(CoreSettings):
+    documents: DocumentSettings = DocumentSettings()
     cors_origins: list[str] = dataclasses.field(default_factory=lambda: ["*"])
     host: str = "0.0.0.0"
     port: int = 8080
@@ -36,8 +38,13 @@ def create_app(settings: AppSettings) -> FastAPI:
         description=settings.description,
         version=settings.version,
     )
+
+    indexing_router = create_indexing_router(settings)
     app.include_router(indexing_router)
+
+    search_router = create_search_router(settings)
     app.include_router(search_router)
+
     configure_tracing(app, service_name="documents-api")
     return app
 
