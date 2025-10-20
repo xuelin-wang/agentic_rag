@@ -22,6 +22,13 @@ curl -X POST http://localhost:8080/documents/search \
          -H 'Content-Type: application/json' \
          -d '{"query":"vector","limit":5}'
 
+curl -X POST http://localhost:8080/documents/index/pdf \
+         -H 'Content-Type: application/pdf' \
+         -data-binary '@/home/<user>/Downloads/vehicleSafety.pdf'
+
+curl -X POST http://localhost:8080/documents/search \
+         -H 'Content-Type: application/json' \
+         -d '{"query":"what are things to be checked for seatbelt inspection","limit":5}'
 
 # run tests
 uv sync --active --extra dev 

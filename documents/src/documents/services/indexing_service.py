@@ -2,20 +2,15 @@
 
 from __future__ import annotations
 
-
-from llama_index.core.ingestion import IngestionPipeline
-from llama_index.core.extractors import SummaryExtractor
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.openai import OpenAI   # for summaries
-from llama_index.readers.docling import DoclingReader
-from llama_index.node_parser.docling import DoclingNodeParser
-
 from collections.abc import Iterable
 from typing import Any
 
-from llama_index.core import Document, VectorStoreIndex
+from llama_index.core import Settings, VectorStoreIndex
+from llama_index.core.schema import TextNode
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 from documents.schemas import DocumentPayload, SearchResult
+from documents.services.settings import DocumentSettings
 
 
 class DocumentIndexNotReadyError(RuntimeError):
@@ -25,9 +20,11 @@ class DocumentIndexNotReadyError(RuntimeError):
 class DocumentIndexService:
     """Coordinates document ingestion and querying through LlamaIndex."""
 
-    def __init__(self) -> None:
+    def __init__(self, settings: DocumentSettings) -> None:
         self._documents: dict[str, DocumentPayload] = {}
         self._index: VectorStoreIndex | None = None
+        self._embed_model = HuggingFaceEmbedding(model_name=settings.embed.model_name)
+        Settings.embed_model = self._embed_model
 
     def index_documents(self, documents: Iterable[DocumentPayload]) -> int:
         """Persist the provided documents in-memory and rebuild the index."""
@@ -39,15 +36,8 @@ class DocumentIndexService:
             self._index = None
             return 0
 
-        llama_documents = [
-            Document(
-                doc_id=payload.document_id,
-                text=payload.content,
-                metadata=payload.metadata,
-            )
-            for payload in self._documents.values()
-        ]
-        self._index = VectorStoreIndex.from_documents(llama_documents)
+        nodes = [self._payload_to_node(payload) for payload in self._documents.values()]
+        self._index = VectorStoreIndex(nodes=nodes)
         return len(self._documents)
 
     def search(self, query: str, *, limit: int) -> list[SearchResult]:
@@ -59,6 +49,22 @@ class DocumentIndexService:
         query_engine = self._index.as_query_engine(similarity_top_k=limit)
         response = query_engine.query(query)
         return self._convert_response(response)
+
+    def _payload_to_node(self, payload: DocumentPayload) -> TextNode:
+        metadata = dict(payload.metadata or {})
+        embedding = metadata.pop("embedding", None)
+        metadata["document_id"] = payload.document_id
+
+        node_kwargs: dict[str, Any] = {
+            "id_": payload.document_id,
+            "text": payload.content,
+            "metadata": metadata,
+        }
+        if embedding is not None:
+            node_kwargs["embedding"] = embedding
+
+        node = TextNode(**node_kwargs)
+        return node
 
     def _convert_response(self, response: Any) -> list[SearchResult]:
         """Map a LlamaIndex response object into API response models."""

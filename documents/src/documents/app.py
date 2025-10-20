@@ -15,6 +15,7 @@ from core import configure_logging, configure_tracing
 from core.cmd_utils import load_app_settings
 from core.settings import CoreSettings
 
+from documents.dependencies import configure_document_dependencies
 from documents.routers.indexing import create_indexing_router
 from documents.routers.search import create_search_router
 from documents.services.settings import DocumentSettings
@@ -38,6 +39,8 @@ def create_app(settings: AppSettings) -> FastAPI:
         description=settings.description,
         version=settings.version,
     )
+
+    configure_document_dependencies(settings.documents)
 
     indexing_router = create_indexing_router(settings.documents)
     app.include_router(indexing_router)

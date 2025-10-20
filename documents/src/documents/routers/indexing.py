@@ -71,6 +71,7 @@ def create_indexing_router(document_settings: DocumentSettings) -> APIRouter:
             document_id=resolved_id,
             service=service,
             original_filename=file.filename,
+            document_settings=document_settings,
         )
 
         return DocumentUploadResponse(
