@@ -13,17 +13,17 @@ from fastapi import (
     status,
 )
 
-from documents.app import AppSettings
 from documents.dependencies import get_document_index_service
 from documents.schemas import DocumentUploadResponse, IndexDocumentsRequest, IndexDocumentsResponse
 from documents.services.indexing_service import DocumentIndexService
 from documents.services.pdf_ingestion import process_pdf_for_indexing, DocumentsStore
+from documents.services.settings import DocumentSettings
 
 
-def create_indexing_router(settings: AppSettings) -> APIRouter:
+def create_indexing_router(document_settings: DocumentSettings) -> APIRouter:
     router = APIRouter(prefix="/documents", tags=["documents"])
 
-    documents_store = DocumentsStore(settings=settings.documents)
+    documents_store = DocumentsStore(settings=document_settings)
 
     ServiceDependency = Annotated[DocumentIndexService, Depends(get_document_index_service)]
     UploadFileDependency = Annotated[UploadFile, File(...)]

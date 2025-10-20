@@ -7,7 +7,8 @@ from collections.abc import Mapping
 from dataclasses import MISSING, dataclass, fields, is_dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Any, TypeVar, get_args, get_origin, get_type_hints
+from typing import Annotated, Any, TypeVar, Union, get_args, get_origin, get_type_hints
+from types import UnionType
 
 import yaml
 
@@ -197,6 +198,10 @@ def _convert_value(value: Any, target_type: Any) -> Any:
     if target_type is Any:
         return value
 
+    origin = get_origin(target_type)
+    if origin is not None:
+        return value
+
     if isinstance(target_type, type):
         if issubclass(target_type, Enum):
             return _convert_enum(value, target_type)
@@ -257,14 +262,15 @@ def _convert_enum(value: Any, enum_type: type[Enum]) -> Enum:
 
 def _strip_optional(field_type: Any) -> tuple[Any, bool]:
     origin = get_origin(field_type)
-    if origin is None:
+    if origin not in {UnionType, Union}:
         return field_type, False
 
-    args = [arg for arg in get_args(field_type) if arg is not type(None)]  # noqa: E721
-    allows_none = len(args) != len(get_args(field_type))
+    args = get_args(field_type)
+    non_none_args = [arg for arg in args if arg is not type(None)]  # noqa: E721
+    allows_none = len(non_none_args) != len(args)
 
-    if len(args) == 1:
-        return args[0], allows_none
+    if allows_none and len(non_none_args) == 1:
+        return non_none_args[0], True
 
     return field_type, allows_none
 

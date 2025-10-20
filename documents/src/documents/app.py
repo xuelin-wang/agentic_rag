@@ -39,10 +39,10 @@ def create_app(settings: AppSettings) -> FastAPI:
         version=settings.version,
     )
 
-    indexing_router = create_indexing_router(settings)
+    indexing_router = create_indexing_router(settings.documents)
     app.include_router(indexing_router)
 
-    search_router = create_search_router(settings)
+    search_router = create_search_router()
     app.include_router(search_router)
 
     configure_tracing(app, service_name="documents-api")

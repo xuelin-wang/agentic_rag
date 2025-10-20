@@ -4,12 +4,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from documents.app import AppSettings
 from documents.dependencies import get_document_index_service
 from documents.schemas import SearchRequest, SearchResponse
 from documents.services.indexing_service import DocumentIndexNotReadyError, DocumentIndexService
 
-def create_search_router(_: AppSettings) -> APIRouter:
+
+def create_search_router() -> APIRouter:
     router = APIRouter(prefix="/documents", tags=["search"])
 
     @router.post("/search", response_model=SearchResponse, summary="Search documents")
