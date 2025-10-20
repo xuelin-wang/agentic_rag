@@ -22,7 +22,8 @@ class DocumentIndexService:
 
     def __init__(self, settings: DocumentSettings) -> None:
         self._documents: dict[str, DocumentPayload] = {}
-        self._index: VectorStoreIndex | None = None
+        self._content_index: VectorStoreIndex | None = None
+        self._summary_index: VectorStoreIndex | None = None
         self._embed_model = HuggingFaceEmbedding(model_name=settings.embed.model_name)
         Settings.embed_model = self._embed_model
 
@@ -33,22 +34,59 @@ class DocumentIndexService:
             self._documents[payload.document_id] = payload
 
         if not self._documents:
-            self._index = None
+            self._content_index = None
+            self._summary_index = None
             return 0
 
-        nodes = [self._payload_to_node(payload) for payload in self._documents.values()]
-        self._index = VectorStoreIndex(nodes=nodes)
+        payloads = list(self._documents.values())
+        content_nodes = [self._payload_to_node(payload) for payload in payloads]
+        summary_nodes = []
+        for payload in payloads:
+            summary_text = str(payload.metadata.get("chunk_summary", "")).strip()
+            if summary_text:
+                summary_nodes.append(self._summary_to_node(payload, summary_text))
+
+        self._content_index = VectorStoreIndex(nodes=content_nodes)
+        self._summary_index = VectorStoreIndex(nodes=summary_nodes) if summary_nodes else None
         return len(self._documents)
 
     def search(self, query: str, *, limit: int) -> list[SearchResult]:
         """Execute a semantic search against the stored index."""
 
-        if self._index is None:
+        if self._content_index is None and self._summary_index is None:
             raise DocumentIndexNotReadyError("Document index has not been built yet.")
 
-        query_engine = self._index.as_query_engine(similarity_top_k=limit)
-        response = query_engine.query(query)
-        return self._convert_response(response)
+        results: list[tuple[SearchResult, float]] = []
+
+        if self._content_index is not None:
+            content_engine = self._content_index.as_query_engine(similarity_top_k=limit)
+            content_response = content_engine.query(query)
+            results.extend(
+                (result, result.score)
+                for result in self._convert_response(content_response, match_type="content")
+            )
+
+        if self._summary_index is not None:
+            summary_engine = self._summary_index.as_query_engine(similarity_top_k=limit)
+            summary_response = summary_engine.query(query)
+            results.extend(
+                (result, result.score)
+                for result in self._convert_response(summary_response, match_type="summary")
+            )
+
+        # Deduplicate by (document_id, chunk_index, match_type) while preserving highest score.
+        ranked: dict[tuple[str, Any, str], tuple[SearchResult, float]] = {}
+        for result, score in results:
+            key = (
+                result.document_id,
+                result.metadata.get("chunk_index"),
+                result.metadata.get("match_type"),
+            )
+            if key not in ranked or score > ranked[key][1]:
+                ranked[key] = (result, score)
+
+        ordered = sorted(ranked.values(), key=lambda item: item[1], reverse=True)
+        return [item[0] for item in ordered[:limit]]
 
     def _payload_to_node(self, payload: DocumentPayload) -> TextNode:
         metadata = dict(payload.metadata or {})
@@ -66,7 +104,19 @@ class DocumentIndexService:
         node = TextNode(**node_kwargs)
         return node
 
-    def _convert_response(self, response: Any) -> list[SearchResult]:
+    def _summary_to_node(self, payload: DocumentPayload, summary_text: str) -> TextNode:
+        metadata = dict(payload.metadata or {})
+        metadata["document_id"] = payload.document_id
+        metadata["match_type"] = "summary"
+
+        node = TextNode(
+            id_=f"{payload.document_id}__summary",
+            text=summary_text,
+            metadata=metadata,
+        )
+        return node
+
+    def _convert_response(self, response: Any, *, match_type: str) -> list[SearchResult]:
         """Map a LlamaIndex response object into API response models."""
 
         results: list[SearchResult] = []
@@ -81,8 +131,11 @@ class DocumentIndexService:
             if document_id in self._documents:
                 payload = self._documents[document_id]
                 metadata = {**payload.metadata, **metadata}
+                metadata["match_type"] = match_type
                 if content is None:
                     content = payload.content
+            else:
+                metadata = {**metadata, "match_type": match_type}
 
             results.append(
                 SearchResult(
