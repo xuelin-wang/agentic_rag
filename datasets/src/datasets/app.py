@@ -5,28 +5,26 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 from typing import Final
+from uuid import UUID
 
 import pydantic.dataclasses as pydantic_dataclasses
 import structlog
 import uvicorn
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, File, Form, Header, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
 from core import configure_logging
 from core.cmd_utils import load_app_settings
 from core.settings import CoreSettings
+from datasets.FsStore import FsSettings, FsStore
+from datasets.schemas import (
+    StoreMetadataRequest,
+    StoreMetadataResponse,
+    UploadDatasetResponse,
+)
 
 LOGGER: Final = structlog.get_logger(__name__)
-
-
-@pydantic_dataclasses.dataclass(frozen=True)
-class FsSettings:
-    """
-    file system store settings
-    """
-    # root of datasets files in the file system
-    root: str = "/tmp/_datasets"
 
 
 @pydantic_dataclasses.dataclass(frozen=True)
@@ -63,11 +61,19 @@ def create_app(settings: AppSettings) -> FastAPI:
         allow_headers=["*"],
     )
 
-    register_routes(app, settings)
+    store = FsStore(settings.fs)
+    app.state.settings = settings
+    app.state.store = store
+
+    register_routes(app, settings, store)
     return app
 
 
-def register_routes(app: FastAPI, settings: AppSettings) -> None:
+UPDATE_METADATA_MODE_HEADER = "X-Metadata-Mode"
+_VALID_METADATA_MODES = {"override", "overlay"}
+
+
+def register_routes(app: FastAPI, settings: AppSettings, store: FsStore) -> None:
     """Attach router skeletons for the datasets API."""
 
     @app.get("/", include_in_schema=False)
@@ -82,6 +88,67 @@ def register_routes(app: FastAPI, settings: AppSettings) -> None:
             "message": "pong",
             "service": settings.service_name or "datasets-service",
         }
+
+    @router.post(
+        "/datasets/storeMetadata",
+        response_model=StoreMetadataResponse,
+        status_code=status.HTTP_200_OK,
+    )
+    def store_metadata(
+        payload: StoreMetadataRequest,
+        metadata_mode: str = Header(
+            default="overlay",
+            alias=UPDATE_METADATA_MODE_HEADER,
+            description="Use 'override' to replace metadata or 'overlay' to merge fields.",
+        ),
+    ) -> StoreMetadataResponse:
+        dataset_id = payload.dataset_id
+        normalized_mode = metadata_mode.lower()
+        if normalized_mode not in _VALID_METADATA_MODES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Invalid metadata update mode '{metadata_mode}'. "
+                    f"Expected one of: {', '.join(sorted(_VALID_METADATA_MODES))}."
+                ),
+            )
+
+        overlay = normalized_mode == "overlay"
+        created = False
+        if not store.dataset_dir_exists(dataset_id):
+            store.store_metadata(dataset_id, payload.metadata)
+            created = True
+        else:
+            if overlay:
+                store.update_metadata(dataset_id, payload.metadata, overlay=True)
+            else:
+                store.store_metadata(dataset_id, payload.metadata)
+
+        status_label = "created" if created else "updated"
+        return StoreMetadataResponse(dataset_id=dataset_id, status=status_label)
+
+    @router.post(
+        "/datasets/uploadFile",
+        response_model=UploadDatasetResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
+    async def upload_file(
+        dataset_id: UUID = Form(...),
+        file: UploadFile = File(...),
+    ) -> UploadDatasetResponse:
+        if not store.dataset_dir_exists(dataset_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Dataset {dataset_id} does not exist.",
+            )
+
+        payload = await file.read()
+        version_path = store.store_data(dataset_id, payload)
+        return UploadDatasetResponse(
+            dataset_id=dataset_id,
+            status="uploaded",
+            filename=version_path.name,
+        )
 
     app.include_router(router)
 

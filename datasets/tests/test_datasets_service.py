@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -62,9 +63,11 @@ def default_config_path() -> Path:
 
 
 @pytest.fixture()
-def client(default_config_path: Path) -> Iterator[TestClient]:
+def client(default_config_path: Path, tmp_path: Path) -> Iterator[TestClient]:
+    fs_root = tmp_path / "store"
     original_env = os.environ.copy()
     try:
+        os.environ["FS__ROOT"] = str(fs_root)
         settings = load_app_settings(
             AppSettings,
             ["--config", str(default_config_path)],
@@ -88,3 +91,150 @@ def test_ping_endpoint(client: TestClient) -> None:
     response = client.get("/v1/ping")
     assert response.status_code == 200
     assert response.json() == {"message": "pong", "service": "datasets-service"}
+
+
+def test_store_metadata_creates_directory(client: TestClient) -> None:
+    dataset_id = uuid4()
+    metadata = {"name": "example", "tags": ["a", "b"]}
+
+    response = client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": metadata},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"dataset_id": str(dataset_id), "status": "created"}
+
+    store = client.app.state.store
+    assert store.dataset_dir_exists(dataset_id) is True
+    assert store.fetch_metadata(dataset_id) == metadata
+
+
+def test_store_metadata_overlay_mode(client: TestClient) -> None:
+    dataset_id = uuid4()
+    initial_metadata = {"name": "dataset", "tags": ["a"]}
+
+    response = client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": initial_metadata},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "created"
+
+    response = client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": {"tags": ["a", "b"], "size": 10}},
+        headers={"X-Metadata-Mode": "overlay"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"dataset_id": str(dataset_id), "status": "updated"}
+
+    store = client.app.state.store
+    assert store.fetch_metadata(dataset_id) == {"name": "dataset", "tags": ["a", "b"], "size": 10}
+
+
+def test_store_metadata_override_mode(client: TestClient) -> None:
+    dataset_id = uuid4()
+    client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": {"a": 1, "b": 2}},
+    )
+
+    response = client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": {"c": 3}},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "updated"
+
+    store = client.app.state.store
+    assert store.fetch_metadata(dataset_id) == {"c": 3}
+
+
+def test_store_metadata_invalid_mode(client: TestClient) -> None:
+    dataset_id = uuid4()
+    client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": {"a": 1}},
+    )
+
+    response = client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": {"a": 2}},
+        headers={"X-Metadata-Mode": "merge"},
+    )
+
+    assert response.status_code == 400
+    assert "Invalid metadata update mode" in response.json()["detail"]
+
+
+def test_upload_file_creates_version(client: TestClient) -> None:
+    dataset_id = uuid4()
+    client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": {"a": 1}},
+    )
+
+    response = client.post(
+        "/v1/datasets/uploadFile",
+        data={"dataset_id": str(dataset_id)},
+        files={"file": ("data.bin", b"hello world", "application/octet-stream")},
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["dataset_id"] == str(dataset_id)
+    assert payload["status"] == "uploaded"
+    assert payload["filename"].startswith("data-")
+    assert payload["filename"].endswith(".bin")
+
+    store = client.app.state.store
+    data = store.fetch_data(dataset_id)
+    assert data == b"hello world"
+
+
+def test_upload_file_missing_dataset(client: TestClient) -> None:
+    response = client.post(
+        "/v1/datasets/uploadFile",
+        data={"dataset_id": str(uuid4())},
+        files={"file": ("data.bin", b"hello world", "application/octet-stream")},
+    )
+
+    assert response.status_code == 404
+    assert "does not exist" in response.json()["detail"]
+
+
+def test_upload_file_multiple_versions(client: TestClient) -> None:
+    dataset_id = uuid4()
+    client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": {"a": 1}},
+    )
+
+    first = client.post(
+        "/v1/datasets/uploadFile",
+        data={"dataset_id": str(dataset_id)},
+        files={"file": ("data.bin", b"first", "application/octet-stream")},
+    )
+    assert first.status_code == 201
+
+    second = client.post(
+        "/v1/datasets/uploadFile",
+        data={"dataset_id": str(dataset_id)},
+        files={"file": ("data.bin", b"second", "application/octet-stream")},
+    )
+    assert second.status_code == 201
+
+    store = client.app.state.store
+    latest = store.fetch_data(dataset_id)
+    assert latest == b"second"
+
+    dataset_root = Path(client.app.state.settings.fs.root)
+    dataset_path = dataset_root / str(dataset_id)
+    version_files = sorted(dataset_path.glob("data-*.bin"))
+    assert len(version_files) == 2
+    symlink = dataset_path / "data.bin"
+    assert symlink.is_symlink()
+    assert symlink.resolve() == version_files[-1]
