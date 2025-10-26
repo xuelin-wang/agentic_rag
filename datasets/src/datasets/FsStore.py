@@ -119,6 +119,22 @@ class FsStore:
             return data_path.read_text(encoding=encoding)
         return data_path.read_bytes()
 
+    def get_data_path(self, dataset_id: UUID) -> Path:
+        """Return the resolved path to the latest dataset file."""
+
+        data_path = self._data_symlink_path(dataset_id)
+        if not data_path.is_symlink() and not data_path.exists():
+            msg = f"data for dataset {dataset_id} does not exist"
+            raise FileNotFoundError(msg)
+        if data_path.is_symlink():
+            target = data_path.resolve()
+        else:
+            target = data_path
+        if not target.exists():
+            msg = f"data file '{target}' for dataset {dataset_id} is missing"
+            raise FileNotFoundError(msg)
+        return target
+
     def dataset_exists(self, dataset_id: UUID) -> bool:
         """Return True when both data and metadata files exist for the dataset."""
 

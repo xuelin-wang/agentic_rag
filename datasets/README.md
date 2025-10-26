@@ -33,6 +33,11 @@ curl -X POST http://localhost:8100/v1/datasets/uploadFile \
     -F "dataset_id=123e4567-e89b-12d3-a456-426614174000" \
     -F "file=@/home/xuelin/Downloads/user.yaml;type=application/octet-stream"
 
+# read metadata
+curl http://localhost:8100/v1/datasets/metadata?dataset_id=123e4567-e89b-12d3-a456-426614174000
+
+# download file
+curl http://localhost:8100/v1/datasets/metadata?dataset_id=123e4567-e89b-12d3-a456-426614174000
 ```
 
 ## Development

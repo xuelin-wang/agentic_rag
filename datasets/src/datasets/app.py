@@ -10,7 +10,17 @@ from uuid import UUID
 import pydantic.dataclasses as pydantic_dataclasses
 import structlog
 import uvicorn
-from fastapi import APIRouter, FastAPI, File, Form, Header, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    FastAPI,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    UploadFile,
+    status,
+)
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
@@ -97,7 +107,7 @@ def register_routes(app: FastAPI, settings: AppSettings, store: FsStore) -> None
     def store_metadata(
         payload: StoreMetadataRequest,
         metadata_mode: str = Header(
-            default="overlay",
+            default="override",
             alias=UPDATE_METADATA_MODE_HEADER,
             description="Use 'override' to replace metadata or 'overlay' to merge fields.",
         ),
@@ -127,6 +137,22 @@ def register_routes(app: FastAPI, settings: AppSettings, store: FsStore) -> None
         status_label = "created" if created else "updated"
         return StoreMetadataResponse(dataset_id=dataset_id, status=status_label)
 
+    @router.get("/datasets/metadata")
+    def get_metadata(dataset_id: UUID) -> dict[str, Any]:
+        if not store.dataset_dir_exists(dataset_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Dataset {dataset_id} does not exist.",
+            )
+        try:
+            metadata = store.fetch_metadata(dataset_id)
+        except FileNotFoundError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Metadata for dataset {dataset_id} not found.",
+            ) from exc
+        return {"dataset_id": str(dataset_id), "metadata": metadata}
+
     @router.post(
         "/datasets/uploadFile",
         response_model=UploadDatasetResponse,
@@ -148,6 +174,26 @@ def register_routes(app: FastAPI, settings: AppSettings, store: FsStore) -> None
             dataset_id=dataset_id,
             status="uploaded",
             filename=version_path.name,
+        )
+
+    @router.get("/datasets/file")
+    def get_file(dataset_id: UUID) -> FileResponse:
+        if not store.dataset_dir_exists(dataset_id):
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND,
+                detail=f"Dataset {dataset_id} does not exist.",
+            )
+        try:
+            path = store.get_data_path(dataset_id)
+        except FileNotFoundError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"File for dataset {dataset_id} not found.",
+            ) from exc
+        return FileResponse(
+            path,
+            filename=path.name,
+            media_type="application/octet-stream",
         )
 
     app.include_router(router)

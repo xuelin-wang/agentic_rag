@@ -238,3 +238,62 @@ def test_upload_file_multiple_versions(client: TestClient) -> None:
     symlink = dataset_path / "data.bin"
     assert symlink.is_symlink()
     assert symlink.resolve() == version_files[-1]
+
+
+def test_get_metadata_endpoint(client: TestClient) -> None:
+    dataset_id = uuid4()
+    metadata = {"name": "example", "tags": ["x"]}
+    client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": metadata},
+    )
+
+    response = client.get(
+        "/v1/datasets/metadata",
+        params={"dataset_id": str(dataset_id)},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["dataset_id"] == str(dataset_id)
+    assert body["metadata"] == metadata
+
+
+def test_get_metadata_missing_dataset(client: TestClient) -> None:
+    response = client.get(
+        "/v1/datasets/metadata",
+        params={"dataset_id": str(uuid4())},
+    )
+
+    assert response.status_code == 404
+
+
+def test_get_file_endpoint(client: TestClient) -> None:
+    dataset_id = uuid4()
+    client.post(
+        "/v1/datasets/storeMetadata",
+        json={"dataset_id": str(dataset_id), "metadata": {"a": 1}},
+    )
+    client.post(
+        "/v1/datasets/uploadFile",
+        data={"dataset_id": str(dataset_id)},
+        files={"file": ("data.bin", b"payload", "application/octet-stream")},
+    )
+
+    response = client.get(
+        "/v1/datasets/file",
+        params={"dataset_id": str(dataset_id)},
+    )
+
+    assert response.status_code == 200
+    assert response.content == b"payload"
+    assert response.headers["content-type"] == "application/octet-stream"
+
+
+def test_get_file_missing_dataset(client: TestClient) -> None:
+    response = client.get(
+        "/v1/datasets/file",
+        params={"dataset_id": str(uuid4())},
+    )
+
+    assert response.status_code == 404
