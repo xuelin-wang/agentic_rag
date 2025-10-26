@@ -13,3 +13,11 @@ cors_origins: ["*"]
 service_name: ""
 metadata:
   owner: "datasets-team"
+
+datasets_store:
+  # must be one of fs: file system,
+  type: "fs"
+  # file system store settings
+  fs:
+    # root of datasets files in the file system
+    root: "/tmp/_datasets"

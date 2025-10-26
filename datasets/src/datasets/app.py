@@ -21,6 +21,15 @@ LOGGER: Final = structlog.get_logger(__name__)
 
 
 @pydantic_dataclasses.dataclass(frozen=True)
+class FsSettings:
+    """
+    file system store settings
+    """
+    # root of datasets files in the file system
+    root: str = "/tmp/_datasets"
+
+
+@pydantic_dataclasses.dataclass(frozen=True)
 class AppSettings(CoreSettings):
     """Settings for the datasets service."""
 
@@ -31,6 +40,9 @@ class AppSettings(CoreSettings):
     reload: bool = False
     service_name: str = "datasets-service"
     metadata: dict[str, str] = dataclasses.field(default_factory=dict)
+    # must be one of fs: file system,
+    type: str = "fs"
+    fs: FsSettings = FsSettings()
 
 
 def create_app(settings: AppSettings) -> FastAPI:
