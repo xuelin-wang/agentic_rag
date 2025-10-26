@@ -3,6 +3,9 @@
 Polyrepo that hosts several focused subprojects working together to deliver an agentic retrieval-augmented system.
 
 ## Todo
+- synthetic data generation
+generate questions/expected answers from a document. and store it using datasets api.
+
 - a simple rag agent using llamaindex library. Must be able to load a pdf file, have summaries for each chunk, 
 and when search, must combine BM25 that searches the summaries and vector search to get best matches of relevant
 chunks for a query
