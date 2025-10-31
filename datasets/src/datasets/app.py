@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
-from typing import Final
+from typing import Final, Any
 from uuid import UUID
 
 import pydantic.dataclasses as pydantic_dataclasses
