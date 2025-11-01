@@ -32,3 +32,16 @@ Each subproject is an isolated Python package with its own `pyproject.toml` so y
 - Configure your preferred LLM + embedding providers through `agent_core.settings.apply_llama_settings`
 - Start wiring agents together via `agent_core.registry.AgentRegistry`
 - Extend the agents with datastore connectors, tools, and application-specific logic
+
+## run LLM locally
+vllm qwen AWQ model
+```shell
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+vllm serve Qwen/Qwen3-4B-AWQ \
+  --max-model-len 8192 \
+  --max-num-batched-tokens 768 \
+  --max-num-seqs 3 \
+  --gpu-memory-utilization 0.72 \
+  --kv-cache-dtype fp8_e4m3 \
+  --enforce-eager
+```
