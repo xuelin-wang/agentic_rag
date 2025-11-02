@@ -14,6 +14,8 @@ service_name: ""
 metadata:
   owner: "datasets-team"
 
+catalog_base_url: ""
+
 datasets_store:
   # must be one of fs: file system,
   type: "fs"

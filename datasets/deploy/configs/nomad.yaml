@@ -1,0 +1,21 @@
+logging:
+  level_name: "INFO"
+
+title: "Datasets Service"
+description: ""
+version: "0.1.0"
+
+host: "0.0.0.0"
+port: 8100
+reload: false
+api_prefix: "/v1"
+cors_origins: ["*"]
+service_name: "datasets"
+metadata:
+  deployment: "nomad"
+
+catalog_base_url: ""
+
+type: "fs"
+fs:
+  root: "/var/lib/datasets"

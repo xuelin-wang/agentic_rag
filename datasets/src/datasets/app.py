@@ -48,6 +48,7 @@ class AppSettings(CoreSettings):
     reload: bool = False
     service_name: str = "datasets-service"
     metadata: dict[str, str] = dataclasses.field(default_factory=dict)
+    catalog_base_url: str = ""
     # must be one of fs: file system,
     type: str = "fs"
     fs: FsSettings = FsSettings()
@@ -74,8 +75,15 @@ def create_app(settings: AppSettings) -> FastAPI:
     store = FsStore(settings.fs)
     app.state.settings = settings
     app.state.store = store
+    app.state.catalog_base_url = settings.catalog_base_url
 
     register_routes(app, settings, store)
+
+    LOGGER.info(
+        "datasets.catalog.config",
+        catalog_base_url=settings.catalog_base_url,
+        service_name=settings.service_name,
+    )
     return app
 
 

@@ -1,0 +1,13 @@
+# Ignore everything by default to keep the build context minimal.
+**
+
+# Allow the files that Docker builds require.
+!.dockerignore
+!deploy/
+!deploy/**
+!core/
+!core/**
+!catalog/
+!catalog/**
+!datasets/
+!datasets/**

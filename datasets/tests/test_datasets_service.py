@@ -23,6 +23,7 @@ def test_app_settings_defaults() -> None:
     assert settings.reload is False
     assert settings.service_name == "datasets-service"
     assert settings.metadata == {}
+    assert settings.catalog_base_url == ""
 
 
 def test_load_app_settings_with_env(tmp_path: Path) -> None:

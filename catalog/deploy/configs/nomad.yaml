@@ -1,0 +1,15 @@
+logging:
+  level_name: "INFO"
+
+title: "Catalog Service"
+description: ""
+version: "0.1.0"
+
+host: "0.0.0.0"
+port: 9000
+reload: false
+api_prefix: "/v1"
+cors_origins: ["*"]
+service_name: "catalog"
+metadata:
+  deployment: "nomad"
