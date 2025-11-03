@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
-from typing import Final, Any
+import os
+from typing import Any, Final
 from uuid import UUID
 
+import httpx
 import pydantic.dataclasses as pydantic_dataclasses
 import structlog
 import uvicorn
@@ -20,9 +22,8 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import FileResponse, ORJSONResponse
 
 from core import configure_logging
 from core.cmd_utils import load_app_settings
@@ -75,7 +76,8 @@ def create_app(settings: AppSettings) -> FastAPI:
     store = FsStore(settings.fs)
     app.state.settings = settings
     app.state.store = store
-    app.state.catalog_base_url = settings.catalog_base_url
+    catalog_url = settings.catalog_base_url or os.getenv("SVC_CATALOG_URL", "")
+    app.state.catalog_base_url = catalog_url
 
     register_routes(app, settings, store)
 
@@ -106,6 +108,39 @@ def register_routes(app: FastAPI, settings: AppSettings, store: FsStore) -> None
             "message": "pong",
             "service": settings.service_name or "datasets-service",
         }
+
+    @router.get("/ping-catalog")
+    async def ping_catalog() -> dict[str, str]:
+        base_url = getattr(app.state, "catalog_base_url", "") or ""
+        trimmed = base_url.strip()
+        if not trimmed:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Catalog base URL not configured.",
+            )
+
+        catalog_url = f"{trimmed.rstrip('/')}/v1/ping"
+        timeout = httpx.Timeout(3.0, connect=3.0)
+
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            try:
+                response = await client.get(catalog_url)
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=(
+                        "Catalog ping failed with status "
+                        f"{exc.response.status_code}."
+                    ),
+                ) from exc
+            except httpx.HTTPError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Catalog ping request failed.",
+                ) from exc
+
+        return {"message": "pong-catalog"}
 
     @router.post(
         "/datasets/storeMetadata",

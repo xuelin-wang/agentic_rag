@@ -108,6 +108,7 @@ source = { editable = "." }
 dependencies = [
     { name = "core" },
     { name = "fastapi" },
+    { name = "httpx" },
     { name = "orjson" },
     { name = "python-dotenv" },
     { name = "python-multipart" },
@@ -116,7 +117,6 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "pytest" },
     { name = "ruff" },
 ]
@@ -125,7 +125,7 @@ dev = [
 requires-dist = [
     { name = "core", directory = "../core" },
     { name = "fastapi", specifier = ">=0.119.0" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "orjson", specifier = ">=3.10.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3" },
     { name = "python-dotenv", specifier = ">=1.0.1" },

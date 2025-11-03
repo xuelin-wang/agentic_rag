@@ -1,25 +1,34 @@
 # Nomad Deployment
 
 This directory contains a minimal HashiCorp Nomad deployment targeting the `catalog` and `datasets`
-services. It provides build scripts for container images and a single job specification that can be
-parameterised for development or production environments.
+services. It provides build scripts for container images plus Nomad job specifications that can be
+parameterised for development or production environments. Service discovery now uses Consul, and
+internal traffic flows through Consul Connect sidecars. Traefik remains available exclusively for
+public ingress.
 
 ## Prerequisites
 
 - Docker (or another container runtime compatible with the Nomad Docker driver)
 - HashiCorp Nomad CLI configured to talk to your cluster
-- HashiCorp Consul agent (run `consul agent -dev` locally to mirror production service discovery)
 - Optional: A container registry to publish the built images
+- Optional: A Traefik image variant if you prefer something other than the default `traefik:v3.1`
 
 ## Layout
 
 - `scripts/build-images.sh` – convenience script that builds the service images from the repository root.
-- `nomad/agentic-rag.nomad.hcl` – Nomad job specification for both services. Supply variables at submit
-  time to pick the environment, datacenters, and image tags.
+- `nomad/agentic-rag.nomad.hcl` – Nomad job specification for the catalog and datasets services.
+  Supply variables at submit time to pick the environment, datacenters, and image tags.
+- `nomad/traefik.nomad.hcl` – Traefik job wired to the Nomad service registry and exposing a single
+  `web` entrypoint on port 8080 for inbound traffic.
 
 ## Building Images
 
 ```bash
+# if necessary
+source .venv/bin/activate
+cd <updated service such as datasets>
+uv sync --active
+cd ..
 ./deploy/scripts/build-images.sh
 ```
 
@@ -37,14 +46,14 @@ docker push agentic-rag/datasets:<tag>
 
 ## Running the Job
 
-For local development, launch the dependency agents first:
+For local development, launch a Nomad dev agent with Consul Connect enabled (requires sudo on Linux):
 
 ```bash
-consul agent -dev -ui &
-sudo nomad agent -dev -config=deploy/nomad/dev.hcl -consul-address=127.0.0.1:8500
+# start nomad server/client with embedded Consul + Connect
+sudo NOMAD_BIND_ADDR=0.0.0.0 nomad agent -dev-consul -dev-connect -bind=0.0.0.0 -config=deploy/nomad/dev.hcl
 ```
 
-In a separate terminal, submit the job, overriding variables as needed:
+In a separate terminal, deploy the application services, overriding variables as needed:
 
 ```bash
 tag=dev
@@ -53,6 +62,36 @@ nomad job run \
   -var catalog_image=agentic-rag/catalog:${tag} \
   -var datasets_image=agentic-rag/datasets:${tag} \
   deploy/nomad/agentic-rag.nomad.hcl
+```
+
+Then submit Traefik if you want HTTP ingress during development:
+
+```bash
+nomad job run \
+  -var environment=dev \
+  deploy/nomad/traefik.nomad.hcl
+```
+
+### Smoke test
+
+```bash
+# inside the datasets allocation, the Consul Connect upstream is bound locally
+nomad alloc exec -task datasets <alloc-id> env | grep SVC_CATALOG_URL
+nomad alloc exec -task datasets <alloc-id> curl "$SVC_CATALOG_URL/v1/ping"
+
+# from outside (Traefik ingress)
+curl -H 'Host: datasets.dev.nomad' http://127.0.0.1:8080/v1/ping
+curl -H 'Host: datasets.dev.nomad' http://127.0.0.1:8080/v1/ping-catalog
+```
+
+### debug
+ui: http://127.0.0.1:4646/ui/jobs
+
+```shell
+# allocations
+nomad operator api /v1/allocations?namespace=default | jq '.[].ID'
+# check alloc status
+nomad alloc statu <alloc id>
 ```
 
 ### Useful Variables
@@ -65,12 +104,11 @@ nomad job run \
   defaulting to the Nomad-specific YAML files committed in each service.
 
 The Nomad job name is fixed to `agentic-rag`; stop the job with `nomad job stop agentic-rag`.
-With Consul running (for example `consul agent -dev -ui`), the service registrations will appear in
-the catalog and can be queried via `curl http://127.0.0.1:8500/v1/catalog/service/catalog-dev`.
-Adjust checks, resources, and network definitions as your infrastructure matures.
-
-The datasets task uses a Nomad template stanza to resolve the catalog service address from Consul
-and exports it as `CATALOG_BASE_URL`, keeping inter-service calls aligned with dynamic allocations.
+With Consul Connect, each service registers in Consul (`nomad service list`) and exposes a local
+loopback address for dependent workloads via sidecar proxies. The datasets task receives
+`SVC_CATALOG_URL=http://127.0.0.1:9191` so internal calls never rely on container or host IPs.
+Traefik is no longer part of the east–west traffic path; it should only be used for public ingress
+during development or production.
 
 ## install tools
 See https://developer.hashicorp.com/nomad/docs/deploy

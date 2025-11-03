@@ -5,6 +5,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from uuid import uuid4
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -92,6 +93,74 @@ def test_ping_endpoint(client: TestClient) -> None:
     response = client.get("/v1/ping")
     assert response.status_code == 200
     assert response.json() == {"message": "pong", "service": "datasets-service"}
+
+
+def test_create_app_populates_catalog_url_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SVC_CATALOG_URL", "http://127.0.0.1:9191")
+    app = create_app(AppSettings())
+    assert app.state.catalog_base_url == "http://127.0.0.1:9191"
+
+
+def test_ping_catalog_success(monkeypatch: pytest.MonkeyPatch, client: TestClient) -> None:
+    client.app.state.catalog_base_url = "http://catalog:9000"
+    captured: dict[str, str] = {}
+
+    class DummyAsyncClient:
+        async def __aenter__(self) -> DummyAsyncClient:
+            return self
+
+        async def __aexit__(self, exc_type: object, exc: object, tb: object) -> bool:
+            return False
+
+        async def get(self, url: str) -> httpx.Response:
+            captured["url"] = url
+            return httpx.Response(
+                status_code=200,
+                json={"message": "pong"},
+                request=httpx.Request("GET", url),
+            )
+
+    monkeypatch.setattr("datasets.app.httpx.AsyncClient", DummyAsyncClient)
+
+    response = client.get("/v1/ping-catalog")
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "pong-catalog"}
+    assert captured["url"] == "http://catalog:9000/v1/ping"
+
+
+def test_ping_catalog_missing_config(client: TestClient) -> None:
+    client.app.state.catalog_base_url = ""
+
+    response = client.get("/v1/ping-catalog")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Catalog base URL not configured."
+
+
+def test_ping_catalog_failure(monkeypatch: pytest.MonkeyPatch, client: TestClient) -> None:
+    client.app.state.catalog_base_url = "http://catalog:9000"
+
+    class FailingAsyncClient:
+        async def __aenter__(self) -> FailingAsyncClient:
+            return self
+
+        async def __aexit__(self, exc_type: object, exc: object, tb: object) -> bool:
+            return False
+
+        async def get(self, url: str) -> httpx.Response:
+            return httpx.Response(
+                status_code=500,
+                json={"message": "error"},
+                request=httpx.Request("GET", url),
+            )
+
+    monkeypatch.setattr("datasets.app.httpx.AsyncClient", FailingAsyncClient)
+
+    response = client.get("/v1/ping-catalog")
+
+    assert response.status_code == 503
+    assert response.json()["detail"].startswith("Catalog ping failed with status")
 
 
 def test_store_metadata_creates_directory(client: TestClient) -> None:

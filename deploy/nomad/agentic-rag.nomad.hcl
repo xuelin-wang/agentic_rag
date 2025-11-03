@@ -62,21 +62,6 @@ job "agentic-rag" {
       }
     }
 
-    service {
-      name = "catalog-${var.environment}"
-      port = "http"
-      tags = ["traefik.enable=false"]
-      provider = "consul"
-
-      check {
-        name     = "catalog-http"
-        type     = "http"
-        path     = "/"
-        interval = "10s"
-        timeout  = "2s"
-      }
-    }
-
     task "catalog" {
       driver = "docker"
 
@@ -100,6 +85,24 @@ job "agentic-rag" {
         delay    = "15s"
         mode     = "delay"
       }
+
+      service {
+        name     = "catalog-${var.environment}"
+        port     = "http"
+        provider = "consul"
+
+        connect {
+          sidecar_service {}
+        }
+
+        check {
+          name     = "catalog-http"
+          type     = "http"
+          path     = "/"
+          interval = "10s"
+          timeout  = "2s"
+        }
+      }
     }
   }
 
@@ -110,21 +113,6 @@ job "agentic-rag" {
       mode = "bridge"
       port "http" {
         to = 8100
-      }
-    }
-
-    service {
-      name = "datasets-${var.environment}"
-      port = "http"
-      tags = ["traefik.enable=false"]
-      provider = "consul"
-
-      check {
-        name     = "datasets-http"
-        type     = "http"
-        path     = "/"
-        interval = "10s"
-        timeout  = "2s"
       }
     }
 
@@ -142,16 +130,10 @@ job "agentic-rag" {
 
       template {
         data = <<-EOF
-          {{- $service_name := printf "catalog-%s" (meta "environment") -}}
-          {{- with service $service_name }}
-          {{- $instance := index . 0 -}}
-          CATALOG_BASE_URL=http://{{ $instance.Address }}:{{ $instance.Port }}
-          {{- else }}
-          CATALOG_BASE_URL=
-          {{- end }}
+          SVC_CATALOG_URL=http://127.0.0.1:9191
         EOF
-        destination = "secrets/catalog.env"
-        env          = true
+        destination = "secrets/upstreams.env"
+        env         = true
       }
 
       resources {
@@ -164,6 +146,33 @@ job "agentic-rag" {
         interval = "5m"
         delay    = "15s"
         mode     = "delay"
+      }
+
+      service {
+        name     = "datasets-${var.environment}"
+        port     = "http"
+        provider = "consul"
+
+        connect {
+          sidecar_service {
+            proxy {
+              upstreams = [
+                {
+                  destination_name = "catalog-${var.environment}"
+                  local_bind_port  = 9191
+                }
+              ]
+            }
+          }
+        }
+
+        check {
+          name     = "datasets-http"
+          type     = "http"
+          path     = "/"
+          interval = "10s"
+          timeout  = "2s"
+        }
       }
     }
   }

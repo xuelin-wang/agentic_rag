@@ -1,11 +1,13 @@
-from pathlib import Path
-from typing import Final, TypeVar, Sequence
-from dotenv import load_dotenv
-from dataclasses import MISSING, dataclass, fields, is_dataclass
-import core.settings
 import argparse
 import os
+from dataclasses import MISSING, dataclass, fields, is_dataclass
+from pathlib import Path
+from typing import Final, Sequence, TypeVar
+
 import structlog
+from dotenv import load_dotenv
+
+import core.settings
 
 LOGGER: Final = structlog.get_logger(__name__)
 
@@ -53,9 +55,6 @@ def _load_app_settings(
 
     LOGGER.debug("Loading application settings from YAML",
                  config_path=config_path, env_path=env_path)
-
-    # clean up existing envs
-    os.environ.clear()
 
     if env_path is not None:
         env_path = Path(env_path).expanduser()
