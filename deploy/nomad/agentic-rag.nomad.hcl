@@ -70,6 +70,12 @@ job "agentic-rag" {
 
       connect {
         sidecar_service {}
+        sidecar_task {
+          resources {
+            cpu    = 100
+            memory = 64
+          }
+        }
       }
 
       check {
@@ -133,6 +139,12 @@ job "agentic-rag" {
             }
           }
         }
+        sidecar_task {
+          resources {
+            cpu    = 100
+            memory = 64
+          }
+        }
       }
 
       check {
@@ -157,9 +169,7 @@ job "agentic-rag" {
       }
 
       template {
-        data = <<-EOF
-          SVC_CATALOG_URL=http://127.0.0.1:9191
-        EOF
+        data        = "SVC_CATALOG_URL=http://127.0.0.1:9191\n"
         destination = "secrets/upstreams.env"
         env         = true
       }
