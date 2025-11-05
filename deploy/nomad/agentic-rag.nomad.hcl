@@ -68,6 +68,9 @@ job "agentic-rag" {
       port     = "http"
       provider = "consul"
 
+      # Ensure the service is registered at the host IP with the mapped host port
+      address_mode = "host"
+
       connect {
         sidecar_service {}
         sidecar_task {
@@ -78,13 +81,15 @@ job "agentic-rag" {
         }
       }
 
-        check {
-          name     = "catalog-http"
-          type     = "http"
-          path     = "/v1/ping"   # or "/health"
-          interval = "10s"
-          timeout  = "5s"         # a bit more lenient at startup
-        }
+      check {
+        name     = "catalog-http"
+        type     = "http"
+        method   = "GET"
+        path     = "/v1/ping"   # or "/health"
+        port     = "http"
+        interval = "10s"
+        timeout  = "5s"         # a bit more lenient at startup
+      }
     }
 
     task "catalog" {
@@ -129,6 +134,9 @@ job "agentic-rag" {
       port     = "http"
       provider = "consul"
 
+      # Ensure the service is registered at the host IP with the mapped host port
+      address_mode = "host"
+
       connect {
         sidecar_service {
           proxy {
@@ -147,13 +155,15 @@ job "agentic-rag" {
         }
       }
 
-        check {
-          name     = "datasets-http"
-          type     = "http"
-          path     = "/v1/ping"   # or "/health"
-          interval = "10s"
-          timeout  = "5s"
-        }
+      check {
+        name     = "datasets-http"
+        type     = "http"
+        method   = "GET"
+        path     = "/v1/ping"   # or "/health"
+        port     = "http"
+        interval = "10s"
+        timeout  = "5s"
+      }
     }
 
     task "datasets" {
