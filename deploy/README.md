@@ -104,6 +104,10 @@ nomad alloc statu <alloc id>
   defaulting to the Nomad-specific YAML files committed in each service.
 - `FS__ROOT` – injected automatically for the datasets task (`{{ env "NOMAD_ALLOC_DIR" }}/data/datasets`)
   so the store lives on the allocation's writable volume.
+- Services run in bridge networking mode. Use `nomad alloc exec` (for example,
+  `nomad alloc exec -task datasets <alloc-id> curl http://127.0.0.1:8100/v1/ping`) or launch the Traefik job
+  to reach them from the host. Consul Connect upstreams listen on `0.0.0.0` inside allocations so dependents
+  can reach peers via `http://127.0.0.1:<port>`.
 
 The Nomad job name is fixed to `agentic-rag`; stop the job with `nomad job stop agentic-rag`.
 With Consul Connect, each service registers in Consul (`nomad service list`) and exposes a local

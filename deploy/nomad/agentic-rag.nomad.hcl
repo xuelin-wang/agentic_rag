@@ -58,7 +58,7 @@ job "agentic-rag" {
     network {
       mode = "bridge"
       port "http" {
-        to = 9000
+        to     = 9000
         static = 9000
       }
     }
@@ -68,8 +68,8 @@ job "agentic-rag" {
       port     = "http"
       provider = "consul"
 
-      # Ensure the service is registered at the host IP with the mapped host port
-      address_mode = "host"
+      # Register against the allocation IP so health checks run inside the bridge network.
+      address_mode = "alloc"
 
       connect {
         sidecar_service {}
@@ -87,6 +87,7 @@ job "agentic-rag" {
         method   = "GET"
         path     = "/v1/ping"   # or "/health"
         port     = "http"
+        address_mode = "alloc"
         interval = "10s"
         timeout  = "5s"         # a bit more lenient at startup
       }
@@ -124,7 +125,7 @@ job "agentic-rag" {
     network {
       mode = "bridge"
       port "http" {
-        to = 8100
+        to     = 8100
         static = 8100
       }
     }
@@ -134,8 +135,7 @@ job "agentic-rag" {
       port     = "http"
       provider = "consul"
 
-      # Ensure the service is registered at the host IP with the mapped host port
-      address_mode = "host"
+      address_mode = "alloc"
 
       connect {
         sidecar_service {
@@ -143,6 +143,7 @@ job "agentic-rag" {
             upstreams {
               destination_name = "catalog-${var.environment}"
               destination_namespace = var.namespace
+              local_bind_address = "0.0.0.0"
               local_bind_port  = 9191
             }
           }
@@ -161,6 +162,7 @@ job "agentic-rag" {
         method   = "GET"
         path     = "/v1/ping"   # or "/health"
         port     = "http"
+        address_mode = "alloc"
         interval = "10s"
         timeout  = "5s"
       }
