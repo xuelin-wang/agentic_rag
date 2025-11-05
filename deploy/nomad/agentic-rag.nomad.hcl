@@ -59,6 +59,25 @@ job "agentic-rag" {
       mode = "bridge"
       port "http" {
         to = 9000
+        static = 9000
+      }
+    }
+
+    service {
+      name     = "catalog-${var.environment}"
+      port     = "http"
+      provider = "consul"
+
+      connect {
+        sidecar_service {}
+      }
+
+      check {
+        name     = "catalog-http"
+        type     = "http"
+        path     = "/"
+        interval = "10s"
+        timeout  = "2s"
       }
     }
 
@@ -85,24 +104,6 @@ job "agentic-rag" {
         delay    = "15s"
         mode     = "delay"
       }
-
-      service {
-        name     = "catalog-${var.environment}"
-        port     = "http"
-        provider = "consul"
-
-        connect {
-          sidecar_service {}
-        }
-
-        check {
-          name     = "catalog-http"
-          type     = "http"
-          path     = "/"
-          interval = "10s"
-          timeout  = "2s"
-        }
-      }
     }
   }
 
@@ -113,6 +114,33 @@ job "agentic-rag" {
       mode = "bridge"
       port "http" {
         to = 8100
+        static = 8100
+      }
+    }
+
+    service {
+      name     = "datasets-${var.environment}"
+      port     = "http"
+      provider = "consul"
+
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "catalog-${var.environment}"
+              destination_namespace = var.namespace
+              local_bind_port  = 9191
+            }
+          }
+        }
+      }
+
+      check {
+        name     = "datasets-http"
+        type     = "http"
+        path     = "/"
+        interval = "10s"
+        timeout  = "2s"
       }
     }
 
@@ -146,33 +174,6 @@ job "agentic-rag" {
         interval = "5m"
         delay    = "15s"
         mode     = "delay"
-      }
-
-      service {
-        name     = "datasets-${var.environment}"
-        port     = "http"
-        provider = "consul"
-
-        connect {
-          sidecar_service {
-            proxy {
-              upstreams = [
-                {
-                  destination_name = "catalog-${var.environment}"
-                  local_bind_port  = 9191
-                }
-              ]
-            }
-          }
-        }
-
-        check {
-          name     = "datasets-http"
-          type     = "http"
-          path     = "/"
-          interval = "10s"
-          timeout  = "2s"
-        }
       }
     }
   }

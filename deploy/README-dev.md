@@ -1,3 +1,4 @@
+
 # Dev Environment Quickstart
 
 These notes capture the workflow for running the Agentic RAG services locally with Nomad + Consul
@@ -81,3 +82,16 @@ set to `deny`.
   must read the injected `SVC_<DEPENDENCY>_URL` values instead of hard-coding host/container IPs.
 - Traefik is not part of east–west traffic. Reserve it for inbound requests until a Consul API
   Gateway is introduced.
+
+## 8. Steps
+consul agent -dev \
+-ui \
+-client=0.0.0.0 \
+-hcl='connect { enabled = true }' \
+-hcl='ports { grpc = 8502 }'
+
+sudo nomad agent -dev -bind=0.0.0.0
+
+nomad job run   -var environment=dev   -var catalog_image=agentic-rag/catalog:${tag}   -var datasets_image=agentic-rag/datasets:${tag}   deploy/nomad/agentic-rag.nomad.hcl
+
+consul intention create -allow datasets catalog
