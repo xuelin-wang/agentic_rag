@@ -102,6 +102,8 @@ nomad alloc statu <alloc id>
 - `catalog_count` / `datasets_count` – optional scaling knobs for each task group.
 - `catalog_config_path` / `datasets_config_path` – configuration file paths inside the container,
   defaulting to the Nomad-specific YAML files committed in each service.
+- `FS__ROOT` – injected automatically for the datasets task (`{{ env "NOMAD_ALLOC_DIR" }}/data/datasets`)
+  so the store lives on the allocation's writable volume.
 
 The Nomad job name is fixed to `agentic-rag`; stop the job with `nomad job stop agentic-rag`.
 With Consul Connect, each service registers in Consul (`nomad service list`) and exposes a local
@@ -130,4 +132,3 @@ sudo apt-get update && sudo apt-get install -y nomad
 ```
 
 May need post installation steps for cni etc, please consult the hashicorp page.
-

@@ -18,4 +18,5 @@ catalog_base_url: ""
 
 type: "fs"
 fs:
-  root: "/var/lib/datasets"
+  # Overridden at deploy time via FS__ROOT (see Nomad job template).
+  root: ""

@@ -106,6 +106,10 @@ def test_ping_catalog_success(monkeypatch: pytest.MonkeyPatch, client: TestClien
     captured: dict[str, str] = {}
 
     class DummyAsyncClient:
+        def __init__(self, **_: object) -> None:
+            # mirror httpx.AsyncClient signature (timeout, etc.) without storing
+            pass
+
         async def __aenter__(self) -> DummyAsyncClient:
             return self
 
@@ -142,6 +146,9 @@ def test_ping_catalog_failure(monkeypatch: pytest.MonkeyPatch, client: TestClien
     client.app.state.catalog_base_url = "http://catalog:9000"
 
     class FailingAsyncClient:
+        def __init__(self, **_: object) -> None:
+            pass
+
         async def __aenter__(self) -> FailingAsyncClient:
             return self
 

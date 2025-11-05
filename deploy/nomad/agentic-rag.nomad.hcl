@@ -179,7 +179,10 @@ job "agentic-rag" {
       }
 
       template {
-        data        = "SVC_CATALOG_URL=http://127.0.0.1:9191\n"
+        data = <<-EOT
+SVC_CATALOG_URL=http://127.0.0.1:9191
+FS__ROOT={{ env "NOMAD_ALLOC_DIR" }}/data/datasets
+EOT
         destination = "secrets/upstreams.env"
         env         = true
       }
